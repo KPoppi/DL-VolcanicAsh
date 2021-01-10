@@ -1,3 +1,11 @@
+Volcanos.Rproj
+
+CNN_tile-based_all.R
+
+etna_data/*
+QGIS/*
+
+
 # History files
 .Rhistory
 .Rapp.history
