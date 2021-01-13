@@ -1,7 +1,6 @@
 # function taken from https://dachro.github.io/ogh_summer_school_2020/Tutorial_DL_UAV.html#from_single_images_to_maps
 # author: Christian Knoth
-dl_subsets <- function(inputrst, targetsize, targetdir, targetname, img_info_only = FALSE, is_mask = FALSE){
-  require(jpeg)
+dl_subsets <- function(inputrst, targetsize, targetdir, targetname, img_info_only = FALSE, is_mask = FALSE) {
   require(raster)
   
   # determine next number of quadrats in x and y direction, by simple rounding
@@ -59,7 +58,7 @@ dl_subsets <- function(inputrst, targetsize, targetdir, targetname, img_info_onl
 
 # function taken from https://dachro.github.io/ogh_summer_school_2020/Tutorial_DL_UAV.html#from_single_images_to_maps
 # author: Christian Knoth
-rebuild_img <- function(pred_subsets, out_path, target_rst){
+rebuild_img <- function(pred_subsets, out_path, target_rst) {
   require(raster)
   require(gdalUtils)
   require(stars)

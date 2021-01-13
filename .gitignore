@@ -1,5 +1,6 @@
 Volcanos.Rproj
 
+data_for_pixel-based.RData
 CNN_tile-based_all.R
 
 etna_data/*
