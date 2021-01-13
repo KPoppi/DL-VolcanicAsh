@@ -18,16 +18,17 @@ read_tif <- function(f, mask=FALSE) {
 # preprocessing of TIF-files given in data.frames (arrays)
 dl_prepare_data_tif <- function(files, train, predict=FALSE, subsets_path=NULL, model_input_shape = c(448,448), batch_size = 10L) {
   
+  ###### preparing training or validation data: ######
   if (!predict) {
     # function for random change of saturation, brightness and hue, will be used as part of the augmentation
     spectral_augmentation <- function(img) {
-      img %>% 
-        tf$image$random_brightness(max_delta = 0.3) %>% 
+      img %>%
+        tf$image$random_brightness(max_delta = 0.3) %>%
         tf$image$random_contrast(lower = 0.5, upper = 0.7) %>%
         # TODO the following is not supported for >3 bands - you can uncomment in case you use only 3band images
         #tf$image$random_saturation(lower = 0.5, upper = 0.7) %>%
         # make sure we still are between 0 and 1
-        tf$clip_by_value(0, 1) 
+        tf$clip_by_value(0, 1)
     }
     
     # array to tensor: create a tf_dataset from the first two coloumns of data.frame (ignoring area number used for splitting during data preparation),
@@ -39,12 +40,12 @@ dl_prepare_data_tif <- function(files, train, predict=FALSE, subsets_path=NULL, 
     dataset <- dataset_map(dataset, function(.x) list_modify(.x,
                                                              img = tf$image$convert_image_dtype(.x$img, dtype = tf$float64),
                                                              mask = tf$image$convert_image_dtype(.x$mask, dtype = tf$float64)
-    )) 
+    ))
     
     # resize:
-    # for each record in dataset, both its list items are modified by the results of applying resize to them 
-    dataset <- 
-      dataset_map(dataset, function(.x) 
+    # for each record in dataset, both its list items are modified by the results of applying resize to them
+    dataset <-
+      dataset_map(dataset, function(.x)
         list_modify(.x, img = tf$image$resize(.x$img, size = shape(model_input_shape[1], model_input_shape[2])),
                     mask = tf$image$resize(.x$mask, size = shape(model_input_shape[1], model_input_shape[2]))))
     
@@ -98,17 +99,19 @@ dl_prepare_data_tif <- function(files, train, predict=FALSE, subsets_path=NULL, 
     
     # output needs to be unnamed
     dataset <-  dataset_map(dataset, unname)
-    
-    } else {
+  }
+  
+  ###### preparing data for real prediction (no validation and no data augmentation): ######
+  else {
     # make sure subsets are read in correct order so that they can later be reassambled correctly
     # needs files to be named accordingly (only number)
     o <- order(as.numeric(tools::file_path_sans_ext(basename(list.files(subsets_path)))))
     subset_list <- list.files(subsets_path, full.names = T)[o]
     
     dataset <- tensor_slices_dataset(subset_list)
-    dataset <- dataset_map(dataset, function(.x) tf$image$convert_image_dtype(.x, dtype = tf$float32)) 
-    dataset <- dataset_map(dataset, function(.x) tf$image$resize(.x, size = shape(model_input_shape[1], model_input_shape[2]))) 
+    dataset <- dataset_map(dataset, function(.x) tf$image$convert_image_dtype(.x, dtype = tf$float32))
+    dataset <- dataset_map(dataset, function(.x) tf$image$resize(.x, size = shape(model_input_shape[1], model_input_shape[2])))
     dataset <- dataset_batch(dataset, batch_size)
     dataset <-  dataset_map(dataset, unname)
-    }
+  }
 }
