@@ -7,7 +7,7 @@
 
 # 3 network-models:
 # u_net
-# pretrained_net
+# pretrained_net (only tile-based, not-pixel based)
 # combined_u_net
 
 
@@ -63,6 +63,8 @@ u_net
 
 ################################ PRETRAINED CNN: VGG16 (pretrained_net) ################################
 
+# NOT PIXEL-BASED
+
 # load vgg16 as basis for feature extraction
 vgg16_feat_extr <- application_vgg16(include_top = F,
                                      input_shape = c(448,448,3),
@@ -92,7 +94,7 @@ vgg16_feat_extr <- application_vgg16(weights = "imagenet", include_top = FALSE, 
 # freeze_weights(vgg16_feat_extr, to = "block1_pool") 
 
 # do not use the whole model but only up to layer 15
-unet_tensor <- vgg16_feat_extr$layers[[15]]$output 
+unet_tensor <- vgg16_feat_extr$layers[[15]]$output
 
 
 ### add the second part of 'U' for segmentation ###
@@ -125,7 +127,7 @@ unet_tensor <- layer_concatenate(list(vgg16_feat_extr$layers[[3]]$output, unet_t
 unet_tensor <- layer_conv_2d(unet_tensor, filters = 64, kernel_size = 3, padding = "same", activation = "relu")
 unet_tensor <- layer_conv_2d(unet_tensor, filters = 64, kernel_size = 3, padding = "same", activation = "relu")
 
-# final output 
+# final output
 unet_tensor <- layer_conv_2d(unet_tensor, filters = 1, kernel_size = 1, activation = "sigmoid")
 
 # create model from tensors

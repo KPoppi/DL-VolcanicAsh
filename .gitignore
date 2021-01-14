@@ -4,6 +4,8 @@ data_for_pixel-based.RData
 CNN_tile-based_all.R
 
 etna_data/*
+sakurajima_data/*
+suwanosejima_data/*
 QGIS/*
 
 
