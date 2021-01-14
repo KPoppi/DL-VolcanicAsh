@@ -1,7 +1,16 @@
-# gotten from https://pad.uni-muenster.de/***
+# Code for study project "Einsatz von Cloud Computing Services fuer Deep Learning in der Fernerkundung"
+# in the winter semester 2020/2021 at the University of Muenster
+# by Fabian Fermazin and Katharina Poppinga
+
+reduce_channels <- function(arr, channels) {
+  arr = arr[,,(channels)]
+  return (arr)
+}
+
+
+# the following two functions are gotten from https://pad.uni-muenster.de/***
 # author: Christian Knoth
 # uses code from: https://blogs.rstudio.com/ai/posts/2019-08-23-unet/ (accessed 2020-08-12)
-
 
 # loads a TIF-file and makes an array out of it
 # with package 'stars'
@@ -14,10 +23,6 @@ read_tif <- function(f, mask=FALSE) {
   return(out)
 }
 
-reduce_channels <- function(arr ,channels) {
-  arr = arr[,,(channels)]
-  return (arr)
-}
 
 # preprocessing of TIF-files given in data.frames (arrays)
 dl_prepare_data_tif <- function(files, train, predict=FALSE, subsets_path=NULL, model_input_shape = c(448,448), batch_size = 10L) {
