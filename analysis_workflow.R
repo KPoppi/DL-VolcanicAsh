@@ -190,20 +190,26 @@ rebuild_img(pred_subsets = predictions,
 # *****************************************************************************************************
 
 
+
+
 ######################################################################################################
 
-# using the 'pretrained_net':
-# TODO number of bands must be adapted because pretrained_net takes just 3 bands
+# on a local machine, not on AWS:
+
+pretrained_unet <- load_model_hdf5("./pretrained_unet.h5")
+
+# using the pretrained_unet:
+# number of bands must be adapted because pretrained_unet takes just 3 bands
 
 compile(
-  pretrained_net,
+  pretrained_unet,
   optimizer = optimizer_rmsprop(lr = 1e-5),
   loss = "binary_crossentropy",
   metrics = c("accuracy")
 )
 
 # the whole net will be used while training but only the weights of our own added layers will be adapted
-diagnostics <- fit(pretrained_net,
+diagnostics <- fit(pretrained_unet,
                    training_dataset,
                    epochs = 6,
                    validation_data = validation_dataset)

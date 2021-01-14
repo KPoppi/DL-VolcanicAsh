@@ -90,8 +90,8 @@ pretrained_net
 vgg16_feat_extr <- application_vgg16(weights = "imagenet", include_top = FALSE, input_shape = c(448,448,3))
 
 # optionally freeze first layers to prevent changing of their weights, either whole convbase or only certain layers
-# freeze_weights(vgg16_feat_extr) #or:
-# freeze_weights(vgg16_feat_extr, to = "block1_pool") 
+#freeze_weights(vgg16_feat_extr) #or:
+#freeze_weights(vgg16_feat_extr, to = "block1_pool") 
 
 # do not use the whole model but only up to layer 15
 unet_tensor <- vgg16_feat_extr$layers[[15]]$output
@@ -132,6 +132,6 @@ unet_tensor <- layer_conv_2d(unet_tensor, filters = 1, kernel_size = 1, activati
 
 # create model from tensors
 combined_u_net <- keras_model(inputs = vgg16_feat_extr$input,
-                                   outputs = unet_tensor)
+                              outputs = unet_tensor)
 
 combined_u_net
