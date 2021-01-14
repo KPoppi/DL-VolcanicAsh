@@ -61,7 +61,7 @@ dl_prepare_data_tif <- function(files, train, predict=FALSE, subsets_path=NULL, 
                                                                          img = tf$image$flip_left_right(.x$img),
                                                                          mask = tf$image$flip_left_right(.x$mask)
       ))
-      dataset_augmented <- dataset_concatenate(dataset,augmentation)
+      dataset_augmented <- dataset_concatenate(dataset, augmentation)
       
       # augmentation 2: flip up down, including random change of saturation, brightness and contrast
       augmentation <- dataset_map(dataset, function(.x) list_modify(.x,
@@ -71,7 +71,7 @@ dl_prepare_data_tif <- function(files, train, predict=FALSE, subsets_path=NULL, 
                                                                          img = tf$image$flip_up_down(.x$img),
                                                                          mask = tf$image$flip_up_down(.x$mask)
       ))
-      dataset_augmented <- dataset_concatenate(dataset_augmented,augmentation)
+      dataset_augmented <- dataset_concatenate(dataset_augmented, augmentation)
       
       # augmentation 3: flip left right AND up down, including random change of saturation, brightness and contrast
       augmentation <- dataset_map(dataset, function(.x) list_modify(.x,
@@ -85,7 +85,7 @@ dl_prepare_data_tif <- function(files, train, predict=FALSE, subsets_path=NULL, 
                                                                          img = tf$image$flip_up_down(.x$img),
                                                                          mask = tf$image$flip_up_down(.x$mask)
       ))
-      dataset_augmented <- dataset_concatenate(dataset_augmented,augmentation)
+      dataset_augmented <- dataset_concatenate(dataset_augmented, augmentation)
     }
     
     # shuffling on training set only
@@ -98,7 +98,7 @@ dl_prepare_data_tif <- function(files, train, predict=FALSE, subsets_path=NULL, 
     dataset <- dataset_batch(dataset, batch_size)
     
     # output needs to be unnamed
-    dataset <-  dataset_map(dataset, unname)
+    dataset <- dataset_map(dataset, unname)
   }
   
   ###### preparing data for real prediction (no validation and no data augmentation): ######
@@ -112,6 +112,6 @@ dl_prepare_data_tif <- function(files, train, predict=FALSE, subsets_path=NULL, 
     dataset <- dataset_map(dataset, function(.x) tf$image$convert_image_dtype(.x, dtype = tf$float32))
     dataset <- dataset_map(dataset, function(.x) tf$image$resize(.x, size = shape(model_input_shape[1], model_input_shape[2])))
     dataset <- dataset_batch(dataset, batch_size)
-    dataset <-  dataset_map(dataset, unname)
+    dataset <- dataset_map(dataset, unname)
   }
 }
