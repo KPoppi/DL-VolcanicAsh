@@ -79,6 +79,7 @@ files_training = training(files)
 files_validation = testing(files)
 # first column: images
 # second column: masks
+# up to now the "files" are just the paths on disk
 
 # replace the paths with the corresponding real raster data:
 # therefore make an array out of the real image and mask values (for both training and
