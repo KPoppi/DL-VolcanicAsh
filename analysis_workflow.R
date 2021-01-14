@@ -84,9 +84,11 @@ files_validation = testing(files)
 # therefore make an array out of the real image and mask values (for both training and
 # validation data) with function 'read_tif'
 files_training$img <- lapply(files_training$img, read_tif)
+files_training$img <- lapply(files_training$img, reduce_channels, c(1,4,5)) # reduction of channels for pretrained net
 files_training$img <- lapply(files_training$img, function(x){x/10000})  # rescale Sentinel-2 data to between 0 and 1
 files_training$mask <- lapply(files_training$mask, read_tif, TRUE)
 files_validation$img <- lapply(files_validation$img, read_tif)
+files_validation$img <- lapply(files_validation$img, reduce_channels, c(1,4,5)) #new reduction of channels for pretrained net
 files_validation$img <- lapply(files_validation$img, function(x){x/10000})  # rescale Sentinel-2 data to between 0 and 1
 files_validation$mask <- lapply(files_validation$mask, read_tif, TRUE)
 

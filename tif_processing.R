@@ -14,6 +14,10 @@ read_tif <- function(f, mask=FALSE) {
   return(out)
 }
 
+reduce_channels <- function(arr ,channels) {
+  arr = arr[,,(channels)]
+  return (arr)
+}
 
 # preprocessing of TIF-files given in data.frames (arrays)
 dl_prepare_data_tif <- function(files, train, predict=FALSE, subsets_path=NULL, model_input_shape = c(448,448), batch_size = 10L) {
