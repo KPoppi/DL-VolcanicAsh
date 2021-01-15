@@ -118,7 +118,7 @@ length(validation_tensors)
 
 # the network is written in "CNN_pixel-based.R"
 
-# JUST USE THIS, IF THE COMPUTER WHICH HAS TO DO THE TRAINING IS ABLE TO PERFORM ON THIS
+# JUST USE THIS WITH A GPU
 compile(
   u_net,
   optimizer = optimizer_rmsprop(lr = 1e-5),
@@ -176,12 +176,11 @@ prediction_dataset <- dl_prepare_data_tif(train = FALSE,
                                           batch_size = 5L)  # TODO adapt batch size ??
 
 system.time(predictions <- predict(u_net, prediction_dataset))
-
 save_model_hdf5(u_net, filepath = "./u_net.h5")
 
 # assemble the predictions:
 rebuild_img(pred_subsets = predictions,
-            out_path = (paste(getwd(), "/etna_data/pixel-based/prediction/", sep = "")),  # dahin wird fertiges output geschrieben (ordner out wird erstellt)
+            out_path = (paste(getwd(), "/etna_data/pixel-based/prediction/", sep = "")),  # here the output will be written (folder 'out' will be created)
             target_rst = etna_subsets)  # output of 'dl_subsets'
 
 
