@@ -8,7 +8,7 @@
 read_tif <- function(f, mask=FALSE) {
   out = array(NA)
   out = unclass(read_stars(f))[[1]]
-  if(mask==T) { # add a dummy dimension
+  if (mask==T) { # add a dummy dimension
     dim(out) <- c(dim(out), 1)
   }
   return(out)
@@ -36,7 +36,7 @@ dl_prepare_data_tif <- function(files, train, predict=FALSE, subsets_path=NULL, 
     dataset <- tensor_slices_dataset(files[,1:2])
 
     #convert to float32:
-    #for each record in dataset, both its list items are modyfied by the result of applying convert_image_dtype to them
+    #for each record in dataset, both its list items are modified by the result of applying convert_image_dtype to them
     dataset <- dataset_map(dataset, function(.x) list_modify(.x,
                                                              img = tf$image$convert_image_dtype(.x$img, dtype = tf$float64),
                                                              mask = tf$image$convert_image_dtype(.x$mask, dtype = tf$float64)
@@ -93,8 +93,7 @@ dl_prepare_data_tif <- function(files, train, predict=FALSE, subsets_path=NULL, 
       dataset <- dataset_shuffle(dataset_augmented, buffer_size = batch_size*128)
     }
 
-    # train in batches; batch size might need to be adapted depending on
-    # available memory
+    # train in batches; batch size might need to be adapted depending on available memory
     dataset <- dataset_batch(dataset, batch_size)
 
     # output needs to be unnamed
@@ -109,7 +108,7 @@ dl_prepare_data_tif <- function(files, train, predict=FALSE, subsets_path=NULL, 
     subset_list <- list.files(subsets_path, full.names = T)[o]
 
     dataset <- tensor_slices_dataset(subset_list)
-    dataset <- dataset_map(dataset, function(.x) tf$image$convert_image_dtype(.x, dtype = tf$float32))
+    dataset <- dataset_map(dataset, function(.x) tf$image$convert_image_dtype(.x, dtype = tf$float64))
     dataset <- dataset_map(dataset, function(.x) tf$image$resize(.x, size = shape(model_input_shape[1], model_input_shape[2])))
     dataset <- dataset_batch(dataset, batch_size)
     dataset <- dataset_map(dataset, unname)

@@ -2,27 +2,14 @@
 # in the winter semester 2020/2021 at the University of Muenster
 # by Fabian Fermazin and Katharina Poppinga
 
-library(reticulate)
-library(tensorflow)
-library(keras)
-library(purrr)
-library(rsample)
-library(abind)
-library(sf)
-library(stars)
-library(tfdatasets) # tf: tensorflow
-library(digest)
-library(ggplot2)
-library(sp)
-library(raster)
-library(mapview)
-library(gdalUtils)
-library(magick)
+#install.packages(c("reticulate", "tensorflow", "keras", "purrr", "rsample", "abind", "sf", "stars", "tfdatasets", "digest", "ggplot2", "sp", "raster", "mapview", "gdalUtils", "magick"))
+libraries = c("reticulate", "tensorflow", "keras", "purrr", "rsample", "abind", "sf", "stars", "tfdatasets", "digest", "ggplot2", "sp", "raster", "mapview", "gdalUtils", "magick")
+lapply(libraries, require, character.only = TRUE)
 
 #reticulate::install_miniconda()
 #keras::install_keras()
 
-reticulate::py_config() # "reticulate::" ersetzt "library(reticulate)"
+reticulate::py_config() # "reticulate::" replaces"library(reticulate)"
 tensorflow::tf_config()
 keras::is_keras_available()
 
@@ -46,19 +33,18 @@ source("CNN_pixel-based.R")
 
 etna_full <- stack(paste(getwd(), "/etna_data/etna_b2_b3_b4_b8_b12.tif", sep = ""))
 etna_subsets = dl_subsets(inputrst = etna_full,
-                          targetsize = c(448,448),
+                          targetsize = c(100,100),  # TODO adapt targetsize
                           targetdir = (paste(getwd(), "/etna_data/pixel-based/train/imgs/", sep = "")),  # must already exist
                           targetname = "etna_subset_")
 
 etna_mask <- stack(paste(getwd(), "/etna_data/etna_mask.tif", sep = ""))
 etna_mask_subsets = dl_subsets(inputrst = etna_mask,
-                               targetsize = c(448,448),
+                               targetsize = c(100,100),  # TODO adapt targetsize
                                targetdir = (paste(getwd(), "/etna_data/pixel-based/train/masks/", sep = "")),  # must already exist
                                targetname = "etna_mask_subset_")
 
-# TODO sakurajima_full <- stack(paste(getwd(), "/etna_data/sakurajima_b2_b3_b4_b8_b12.tif", sep = ""))
-# TODO suwanosejima_full <- stack(paste(getwd(), "/etna_data/suwanosejima_b2_b3_b4_b8_b12.tif", sep = ""))
-
+# TODO saku_full <- stack(paste(getwd(), "/etna_data/saku_b2_b3_b4_b8_b12.tif", sep = ""))
+# TODO suwa_full <- stack(paste(getwd(), "/etna_data/suwa_b2_b3_b4_b8_b12.tif", sep = ""))
 
 # TODO write functionality to read 'etna_subsets', needed for rebuild_img
 
@@ -95,15 +81,16 @@ files_validation$mask <- lapply(files_validation$mask, read_tif, TRUE)
 # prepare data for training (apply data augmentation)
 training_dataset <- dl_prepare_data_tif(files_training,
                                         train = TRUE,
-                                        model_input_shape = c(448,448),
+                                        model_input_shape = c(100,100),  # TODO adapt model_input_shape
                                         batch_size = 10L)
 validation_dataset <- dl_prepare_data_tif(files_validation,
                                           train = FALSE,
-                                          model_input_shape = c(448,448),
+                                          model_input_shape = c(100,100),  # TODO adapt model_input_shape
                                           batch_size = 10L)
 
 
 ### inspect the resulting data set:
+
 # get all tensors through the python iterator
 training_tensors <- training_dataset%>%as_iterator()%>%iterate()
 validation_tensors <- validation_dataset%>%as_iterator()%>%iterate()
@@ -111,6 +98,13 @@ validation_tensors <- validation_dataset%>%as_iterator()%>%iterate()
 length(training_tensors) # number of tensors (1 tensor has 10 images as defined by 'batch_size' above)
 length(validation_tensors)
 
+dataset_iterator <- as_iterator(training_dataset)
+dataset_list <- iterate(dataset_iterator)
+dataset_list[[1]][[1]]
+
+dataset_iterator <- as_iterator(validation_dataset)
+dataset_list <- iterate(dataset_iterator)
+dataset_list[[1]][[1]]
 
 # *****************************************************************************************************
 
@@ -125,7 +119,6 @@ compile(
   loss = "binary_crossentropy",
   metrics = c(metric_binary_accuracy)
 )
-
 
 diagnostics <- fit(u_net,
                    training_dataset,
@@ -172,7 +165,7 @@ etna_subsets = dl_subsets(inputrst = etna_full,
 prediction_dataset <- dl_prepare_data_tif(train = FALSE,
                                           predict = TRUE,
                                           subsets_path = (paste(getwd(), "/etna_data/pixel-based/prediction/imgs/", sep = "")),
-                                          model_input_shape = c(448,448),
+                                          model_input_shape = c(448,448),  # TODO adapt model_input_shape
                                           batch_size = 5L)  # TODO adapt batch size ??
 
 system.time(predictions <- predict(u_net, prediction_dataset))
