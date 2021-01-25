@@ -4,8 +4,12 @@ data_for_pixel-based.RData
 CNN_tile-based_all.R
 
 etna_data/*
+sakurajima_data/*
+suwanosejima_data/*
 QGIS/*
 
+u_net.h5
+pretrained_unet.h5
 
 # History files
 .Rhistory

@@ -7,7 +7,7 @@
 
 # 3 network-models:
 # u_net
-# pretrained_net
+# pretrained_net (only tile-based, not-pixel based)
 # combined_u_net
 
 
@@ -18,7 +18,7 @@
 ### "contracting path" ###
 
 # input
-input_tensor <- layer_input(shape = c(100,100,5))
+input_tensor <- layer_input(shape = c(100,100,5))  # TODO adapt shape
 
 #conv block 1
 unet_tensor <- layer_conv_2d(input_tensor, filters = 64, kernel_size = c(3,3), padding = "same", activation = "relu")
@@ -63,9 +63,11 @@ u_net
 
 ################################ PRETRAINED CNN: VGG16 (pretrained_net) ################################
 
+# NOT PIXEL-BASED
+
 # load vgg16 as basis for feature extraction
 vgg16_feat_extr <- application_vgg16(include_top = F,
-                                     input_shape = c(448,448,3),
+                                     input_shape = c(448,448,3),   # TODO adapt input_shape
                                      weights = "imagenet")
 # freeze weights, for not updating the weights (that are already adapted) again
 freeze_weights(vgg16_feat_extr)
@@ -85,7 +87,7 @@ pretrained_net
 ############### PRETRAINED VGG16 COMBINED WITH A DIFFERENT OWN U-NET (combined_u_net) ###############
 
 # load pretrained vgg16 and use part of it as contracting path (feature extraction)
-vgg16_feat_extr <- application_vgg16(weights = "imagenet", include_top = FALSE, input_shape = c(448,448,3))
+vgg16_feat_extr <- application_vgg16(weights = "imagenet", include_top = FALSE, input_shape = c(448,448,3)) # TODO adapt input_shape
 
 # optionally freeze first layers to prevent changing of their weights, either whole convbase or only certain layers
 # freeze_weights(vgg16_feat_extr) #or:

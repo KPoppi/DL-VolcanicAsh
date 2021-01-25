@@ -10,7 +10,7 @@ lapply(libraries, require, character.only = TRUE)
 #reticulate::install_miniconda()
 #keras::install_keras()
 
-reticulate::py_config() # "reticulate::" ersetzt "library(reticulate)"
+reticulate::py_config() # "reticulate::" replaces"library(reticulate)"
 tensorflow::tf_config()
 keras::is_keras_available()
 
@@ -44,8 +44,9 @@ etna_mask_subsets = dl_subsets(inputrst = etna_mask,
                                targetdir = (paste(getwd(), "/etna_data/pixel-based/train/masks/", sep = "")),  # must already exist
                                targetname = "etna_mask_subset_")
 
-# TODO sakurajima_full <- stack(paste(getwd(), "/etna_data/sakurajima_b2_b3_b4_b8_b12.tif", sep = ""))
-# TODO suwanosejima_full <- stack(paste(getwd(), "/etna_data/suwanosejima_b2_b3_b4_b8_b12.tif", sep = ""))
+# TODO saku_full <- stack(paste(getwd(), "/etna_data/saku_b2_b3_b4_b8_b12.tif", sep = ""))
+# TODO suwa_full <- stack(paste(getwd(), "/etna_data/suwa_b2_b3_b4_b8_b12.tif", sep = ""))
+
 
 # TODO write functionality to read 'etna_subsets', needed for rebuild_img
 
@@ -167,7 +168,7 @@ etna_subsets = dl_subsets(inputrst = etna_full,
 prediction_dataset <- dl_prepare_data_tif(train = FALSE,
                                           predict = TRUE,
                                           subsets_path = (paste(getwd(), "/etna_data/pixel-based/prediction/imgs/", sep = "")),
-                                          model_input_shape = c(448,448),
+                                          model_input_shape = c(448,448),  # TODO adapt model_input_shape
                                           batch_size = 5L)  # TODO adapt batch size ??
 
 system.time(predictions <- predict(u_net, prediction_dataset))
