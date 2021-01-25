@@ -18,7 +18,7 @@
 ### "contracting path" ###
 
 # input
-input_tensor <- layer_input(shape = c(448,448,5))
+input_tensor <- layer_input(shape = c(100,100,5))
 
 #conv block 1
 unet_tensor <- layer_conv_2d(input_tensor, filters = 64, kernel_size = c(3,3), padding = "same", activation = "relu")
@@ -38,8 +38,8 @@ unet_tensor <- layer_conv_2d(unet_tensor,filters = 256, kernel_size = c(3,3), pa
 ### expanding path ###
 
 # upsampling block 1
-unet_tensor <- layer_conv_2d_transpose(unet_tensor, filters = 128, kernel_size = c(2,2), strides = 2, padding = "same") 
-unet_tensor <- layer_concatenate(list(conc_tensor1, unet_tensor)) # for resampling back to finer grained resolution 
+unet_tensor <- layer_conv_2d_transpose(unet_tensor, filters = 128, kernel_size = c(2,2), strides = 2, padding = "same")
+unet_tensor <- layer_concatenate(list(conc_tensor1, unet_tensor)) # for resampling back to finer grained resolution
 unet_tensor <- layer_conv_2d(unet_tensor, filters = 128, kernel_size = c(3,3), padding = "same", activation = "relu")
 unet_tensor <- layer_conv_2d(unet_tensor, filters = 128, kernel_size = c(3,3), padding = "same", activation = "relu")
 
@@ -53,7 +53,7 @@ unet_tensor <- layer_conv_2d(unet_tensor, filters = 64, kernel_size = c(3,3), pa
 unet_tensor <- layer_conv_2d(unet_tensor, filters = 1, kernel_size = 1, activation = "sigmoid")
 
 
-### combine final unet_tensor (carrying all the transformations applied through the layers) 
+### combine final unet_tensor (carrying all the transformations applied through the layers)
 ### with the input_tensor to create the whole U-net model
 u_net <- keras_model(inputs = input_tensor, outputs = unet_tensor)
 
@@ -72,7 +72,7 @@ freeze_weights(vgg16_feat_extr)
 # only use layers 1 to 15
 pretrained_net <- keras_model_sequential(vgg16_feat_extr$layers[1:15])
 
-# add own flatten and dense layers for the classification 
+# add own flatten and dense layers for the classification
 # these dense layers are going to be trained on our own data only
 pretrained_net <- layer_flatten(pretrained_net)
 pretrained_net <- layer_dense(pretrained_net, units = 256, activation = "relu")
@@ -89,10 +89,10 @@ vgg16_feat_extr <- application_vgg16(weights = "imagenet", include_top = FALSE, 
 
 # optionally freeze first layers to prevent changing of their weights, either whole convbase or only certain layers
 # freeze_weights(vgg16_feat_extr) #or:
-# freeze_weights(vgg16_feat_extr, to = "block1_pool") 
+# freeze_weights(vgg16_feat_extr, to = "block1_pool")
 
 # do not use the whole model but only up to layer 15
-unet_tensor <- vgg16_feat_extr$layers[[15]]$output 
+unet_tensor <- vgg16_feat_extr$layers[[15]]$output
 
 
 ### add the second part of 'U' for segmentation ###
@@ -125,7 +125,7 @@ unet_tensor <- layer_concatenate(list(vgg16_feat_extr$layers[[3]]$output, unet_t
 unet_tensor <- layer_conv_2d(unet_tensor, filters = 64, kernel_size = 3, padding = "same", activation = "relu")
 unet_tensor <- layer_conv_2d(unet_tensor, filters = 64, kernel_size = 3, padding = "same", activation = "relu")
 
-# final output 
+# final output
 unet_tensor <- layer_conv_2d(unet_tensor, filters = 1, kernel_size = 1, activation = "sigmoid")
 
 # create model from tensors
