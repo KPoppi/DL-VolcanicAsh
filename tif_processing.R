@@ -1,10 +1,7 @@
-# gotten from https://pad.uni-muenster.de/***
-# author: Christian Knoth
-# uses code from: https://blogs.rstudio.com/ai/posts/2019-08-23-unet/ (accessed 2020-08-12)
-
-
 # loads a TIF-file and makes an array out of it
 # with package 'stars'
+# gotten from https://pad.uni-muenster.de/***
+# author: Christian Knoth
 read_tif <- function(f, mask=FALSE) {
   out = array(NA)
   out = unclass(read_stars(f))[[1]]
@@ -15,7 +12,17 @@ read_tif <- function(f, mask=FALSE) {
 }
 
 
+# TODO
+reduce_channels <- function(arr ,channels) {
+  arr = arr[,,(channels)]
+  return (arr)
+}
+
+
 # preprocessing of TIF-files given in data.frames (arrays)
+# gotten from https://pad.uni-muenster.de/***
+# author: Christian Knoth
+# uses code from: https://blogs.rstudio.com/ai/posts/2019-08-23-unet/ (accessed 2020-08-12)
 dl_prepare_data_tif <- function(files, train, predict=FALSE, subsets_path=NULL, model_input_shape = c(448,448), batch_size = 10L) {
 
   ###### preparing training or validation data: ######
@@ -33,6 +40,7 @@ dl_prepare_data_tif <- function(files, train, predict=FALSE, subsets_path=NULL, 
 
     # array to tensor: create a tf_dataset from the first two coloumns of data.frame (ignoring area number used for splitting during data preparation),
     # TODO das stimmt nicht?: Ueberpruefen: "right now still containing only paths to images"
+
     dataset <- tensor_slices_dataset(files[,1:2])
 
     #convert to float32:
@@ -61,7 +69,8 @@ dl_prepare_data_tif <- function(files, train, predict=FALSE, subsets_path=NULL, 
                                                                          img = tf$image$flip_left_right(.x$img),
                                                                          mask = tf$image$flip_left_right(.x$mask)
       ))
-      dataset_augmented <- dataset_concatenate(dataset, augmentation)
+
+      dataset_augmented <- dataset_concatenate(dataset,augmentation)
 
       # augmentation 2: flip up down, including random change of saturation, brightness and contrast
       augmentation <- dataset_map(dataset, function(.x) list_modify(.x,
@@ -71,7 +80,8 @@ dl_prepare_data_tif <- function(files, train, predict=FALSE, subsets_path=NULL, 
                                                                          img = tf$image$flip_up_down(.x$img),
                                                                          mask = tf$image$flip_up_down(.x$mask)
       ))
-      dataset_augmented <- dataset_concatenate(dataset_augmented, augmentation)
+                                  
+      dataset_augmented <- dataset_concatenate(dataset_augmented,augmentation)
 
       # augmentation 3: flip left right AND up down, including random change of saturation, brightness and contrast
       augmentation <- dataset_map(dataset, function(.x) list_modify(.x,
@@ -94,6 +104,7 @@ dl_prepare_data_tif <- function(files, train, predict=FALSE, subsets_path=NULL, 
     }
 
     # train in batches; batch size might need to be adapted depending on available memory
+
     dataset <- dataset_batch(dataset, batch_size)
 
     # output needs to be unnamed
@@ -114,4 +125,14 @@ dl_prepare_data_tif <- function(files, train, predict=FALSE, subsets_path=NULL, 
     dataset <- dataset_map(dataset, unname)
   }
   return(dataset)
+}
+
+
+# small linear normalization function because the normalize function from R seems to have trouble preserving RGB
+normalize_tiff <- function(img){
+  n_image = img
+  for(val in 1:dim(n_image)[3]){
+    n_image[,,val] = ( (n_image[,,val] - min(n_image[,,val]))*((1)/((max(n_image[,,val])) - (min(n_image[,,val]))) ) )
+  }
+  return (n_image)
 }
