@@ -1,10 +1,7 @@
-# gotten from https://pad.uni-muenster.de/***
-# author: Christian Knoth
-# uses code from: https://blogs.rstudio.com/ai/posts/2019-08-23-unet/ (accessed 2020-08-12)
-
-
 # loads a TIF-file and makes an array out of it
 # with package 'stars'
+# gotten from https://pad.uni-muenster.de/***
+# author: Christian Knoth
 read_tif <- function(f, mask=FALSE) {
   out = array(NA)
   out = unclass(read_stars(f))[[1]]
@@ -14,12 +11,18 @@ read_tif <- function(f, mask=FALSE) {
   return(out)
 }
 
+
+# TODO
 reduce_channels <- function(arr ,channels) {
   arr = arr[,,(channels)]
   return (arr)
 }
 
+
 # preprocessing of TIF-files given in data.frames (arrays)
+# gotten from https://pad.uni-muenster.de/***
+# author: Christian Knoth
+# uses code from: https://blogs.rstudio.com/ai/posts/2019-08-23-unet/ (accessed 2020-08-12)
 dl_prepare_data_tif <- function(files, train, predict=FALSE, subsets_path=NULL, model_input_shape = c(448,448), batch_size = 10L) {
 
   ###### preparing training or validation data: ######
@@ -124,7 +127,8 @@ dl_prepare_data_tif <- function(files, train, predict=FALSE, subsets_path=NULL, 
   return(dataset)
 }
 
-#Small Linear Normalization function because the normalize function from r seems to have trouble preserving rgb
+
+# small linear normalization function because the normalize function from R seems to have trouble preserving RGB
 normalize_tiff <- function(img){
   n_image = img
   for(val in 1:dim(n_image)[3]){
