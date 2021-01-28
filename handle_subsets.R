@@ -29,7 +29,7 @@ dl_subsets <- function(inputrst, targetsize, targetdir, targetname, img_info_onl
   newYmin <- floor(diffY/2)
   newYmax <- nrow(inputrst)-ceiling(diffY/2)-1
   rst_cropped <- suppressMessages(crop(inputrst, extent(inputrst,newYmin,newYmax,newXmin,newXmax)))
-  writeRaster(rst_cropped,filename = target_dir_crop)
+  #writeRaster(rst_cropped,filename = target_dir_crop)
   #return (list(ssizeX = ssizeX, ssizeY = ssizeY, nsx = nsx, nsy =nsy))
   agg <- suppressMessages(aggregate(rst_cropped[[1]],c(targetsizeX,targetsizeY)))
   agg[]    <- suppressMessages(1:ncell(agg))
@@ -41,13 +41,13 @@ dl_subsets <- function(inputrst, targetsize, targetdir, targetname, img_info_onl
     setTxtProgressBar(pb, i)
     e1  <- extent(agg_poly[agg_poly$polis==i,])
     subs <- suppressMessages(crop(rst_cropped,e1))
-
+    
     writeRaster(subs, filename=paste0(targetdir, targetname, i, ".tif"), overwrite=TRUE) 
-    return(c(extent(rst_cropped),crs(rst_cropped)))
+    #return(c(extent(rst_cropped),crs(rst_cropped)))
   }
   close(pb)
   #img_info <- list("tiles_rows"=nrow(rst_cropped)/targetsizeY, "tiles_cols"=ncol(rst_cropped)/targetsizeX,"crs"= crs(rst_cropped),"extent"=extent(rst_cropped))
-  writeRaster(rst_cropped,filename = paste0(targetdir,"input_rst_cropped.tif"))
+  #writeRaster(rst_cropped,filename = paste0(targetdir,"input_rst_cropped.tif"))
   rm(subs,agg,agg_poly)
   gc()
   return(rst_cropped)

@@ -31,7 +31,7 @@ source("CNN_pixel-based.R")
 # TODO write the following into function that could be called with a specific volcano
 
 ### make subset-tiles from original Sentinel-2 image by using function 'dl_subsets' from 'handle_subsets.R':
-
+# ETNA
 etna_full <- stack(paste(getwd(), "/etna_data/etna_b2_b3_b4_b8_b12.tif", sep = ""))
 etna_subsets = dl_subsets(inputrst = etna_full,
                           targetsize = c(100,100),  # TODO adapt targetsize
@@ -41,11 +41,29 @@ etna_subsets = dl_subsets(inputrst = etna_full,
 etna_mask <- stack(paste(getwd(), "/etna_data/etna_mask.tif", sep = ""))
 etna_mask_subsets = dl_subsets(inputrst = etna_mask,
                                targetsize = c(100,100),  # TODO adapt targetsize
-                               targetdir = (paste(getwd(), "/etna_data/pixel-based/train/masks/", sep = "")),  # must already exist
+                               targetdir = (paste(getwd(), "/etna_data/pixel-based/train/masks/", sep = "")),
                                targetname = "etna_mask_subset_")
 
-# TODO saku_full <- stack(paste(getwd(), "/etna_data/saku_b2_b3_b4_b8_b12.tif", sep = ""))
-# TODO suwa_full <- stack(paste(getwd(), "/etna_data/suwa_b2_b3_b4_b8_b12.tif", sep = ""))
+# SAKURAJIMA
+saku_full <- stack(paste(getwd(), "/sakurajima_data/saku_b2_b3_b4_b8_b12.tif", sep = ""))
+saku_subsets = dl_subsets(inputrst = saku_full,
+                          targetsize = c(100,100),  # TODO adapt targetsize
+                          targetdir = (paste(getwd(), "/sakurajima_data/pixel-based/train/imgs/", sep = "")),
+                          targetname = "saku_subset_")
+
+saku_mask <- stack(paste(getwd(), "/sakurajima_data/saku_mask.tif", sep = ""))
+saku_mask_subsets = dl_subsets(inputrst = saku_mask,
+                               targetsize = c(100,100),  # TODO adapt targetsize
+                               targetdir = (paste(getwd(), "/sakurajima_data/pixel-based/train/masks/", sep = "")),
+                               targetname = "saku_mask_subset_")
+
+# TODO SUWANOSEJIMA
+#suwa_full <- stack(paste(getwd(), "/suwanosejima_data/suwa_b2_b3_b4_b8_b12.tif", sep = ""))
+#suwa_subsets = dl_subsets(inputrst = suwa_full,
+#                          targetsize = c(100,100),  # TODO adapt targetsize
+#                          targetdir = (paste(getwd(), "/suwanosejima_data/pixel-based/train/imgs/", sep = "")),
+#                          targetname = "suwa_subset_")
+
 
 
 # TODO write functionality to read 'etna_subsets', needed for rebuild_img
@@ -54,9 +72,17 @@ etna_mask_subsets = dl_subsets(inputrst = etna_mask,
 ### data preprocessing with data augmentation:
 
 # make data.frame with full paths of images and their masks
+# TODO make one for both volcanos
+# ETNA
 files <- data.frame(
   img = list.files(path = (paste(getwd(), "/etna_data/pixel-based/train/imgs/", sep = "")), full.names=TRUE),
   mask = list.files(path = (paste(getwd(), "/etna_data/pixel-based/train/masks/", sep = "")), full.names=TRUE)
+)
+
+# SAKU
+files <- data.frame(
+  img = list.files(path = (paste(getwd(), "/sakurajima_data/pixel-based/train/imgs/", sep = "")), full.names=TRUE),
+  mask = list.files(path = (paste(getwd(), "/sakurajima_data/pixel-based/train/masks/", sep = "")), full.names=TRUE)
 )
 
 # randomly split the data.frame with the file-paths into a training-dataset (75%) and a validation-dataset (25%)
