@@ -2,6 +2,7 @@
 # in the winter semester 2020/2021 at the University of Muenster
 # by Fabian Fermazin and Katharina Poppinga
 
+
 #install.packages(c("reticulate", "tensorflow", "keras", "purrr", "rsample", "abind", "sf", "stars", "tfdatasets", "digest", "ggplot2", "sp", "raster", "mapview", "gdalUtils", "magick"))
 
 libraries = c("reticulate", "tensorflow", "keras", "purrr", "rsample", "abind", "sf", "stars", "tfdatasets", "digest", "ggplot2", "sp", "raster", "mapview", "gdalUtils", "magick")
@@ -18,17 +19,12 @@ setwd("/home/sp_gruppe2/StudyProject/DL-VolcanicAsh") # path for AWS-instance
 getwd()
 
 source("handle_subsets.R")
+source("data_processing.R")
 source("tif_processing.R")
 source("CNN_pixel-based.R")
 
-# TODO make paths more flexible for all volcanos
-
-
-# *****************************************************************************************************
 
 #################################### TRAINING AND VALIDATION DATA ####################################
-
-# TODO write the following into function that could be called with a specific volcano
 
 ### make subset-tiles from original Sentinel-2 image by using function 'dl_subsets' from 'handle_subsets.R':
 # ETNA
@@ -66,75 +62,53 @@ saku_mask_subsets = dl_subsets(inputrst = saku_mask,
 
 
 
-# TODO write functionality to read 'etna_subsets', needed for rebuild_img
+# TODO write functionality to read 'etna_subsets' etc., needed for rebuild_img
 
 
 ### data preprocessing with data augmentation:
 
-# make data.frame with full paths of images and their masks
-# TODO make one for both volcanos
-# ETNA
-files <- data.frame(
+# *************************************** ETNA ***************************************
+# make data.frame with full paths of etna-images and their masks
+# TODO make one for both volcanos?
+etna_files <- data.frame(
   img = list.files(path = (paste(getwd(), "/etna_data/pixel-based/train/imgs/", sep = "")), full.names=TRUE),
   mask = list.files(path = (paste(getwd(), "/etna_data/pixel-based/train/masks/", sep = "")), full.names=TRUE)
-)
-
-# SAKU
-files <- data.frame(
-  img = list.files(path = (paste(getwd(), "/sakurajima_data/pixel-based/train/imgs/", sep = "")), full.names=TRUE),
-  mask = list.files(path = (paste(getwd(), "/sakurajima_data/pixel-based/train/masks/", sep = "")), full.names=TRUE)
 )
 
 # randomly split the data.frame with the file-paths into a training-dataset (75%) and a validation-dataset (25%)
 # 'training(files)' will get the training-data-paths
 # 'testing(files)' will get the validation-data-paths
-files <- initial_split(files, prop = 0.75)
-files_training = training(files)
-files_validation = testing(files)
+etna_files <- initial_split(etna_files, prop = 0.75)
+etna_files_training = training(etna_files)
+etna_files_validation = testing(etna_files)
 # first column: images
 # second column: masks
 # up to now the "files" are just the paths on disk
 
-# replace the paths with the corresponding real raster data:
-# therefore make an array out of the real image and mask values (for both training and
-# validation data) with function 'read_tif'
-files_training$img <- lapply(files_training$img, read_tif)
-files_training$img <- lapply(files_training$img, function(x){x/10000})  # rescale Sentinel-2 data to between 0 and 1
-files_training$mask <- lapply(files_training$mask, read_tif, TRUE)
-files_validation$img <- lapply(files_validation$img, read_tif)
-files_validation$img <- lapply(files_validation$img, function(x){x/10000})  # rescale Sentinel-2 data to between 0 and 1
-files_validation$mask <- lapply(files_validation$mask, read_tif, TRUE)
+# make training-dataset and validation-dataset of etna-data, both with data augmentation
+etna_training_dataset = make_dataset_for_CNN(files = etna_files_training, train = TRUE)
+etna_validation_dataset = make_dataset_for_CNN(files = etna_files_validation, train = FALSE)
+
+inspect_both_datasets(etna_training_dataset, etna_validation_dataset)
 
 
-# prepare data for training (apply data augmentation)
-training_dataset <- dl_prepare_data_tif(files_training,
-                                        train = TRUE,
-                                        model_input_shape = c(100,100),
-                                        batch_size = 10L)
-validation_dataset <- dl_prepare_data_tif(files_validation,
-                                          train = FALSE,
-                                          model_input_shape = c(100,100),
-                                          batch_size = 10L)
+# *************************************** SAKU ***************************************
+saku_files <- data.frame(
+  img = list.files(path = (paste(getwd(), "/sakurajima_data/pixel-based/train/imgs/", sep = "")), full.names=TRUE),
+  mask = list.files(path = (paste(getwd(), "/sakurajima_data/pixel-based/train/masks/", sep = "")), full.names=TRUE)
+)
+
+saku_files <- initial_split(saku_files, prop = 0.75)
+saku_files_training = training(saku_files)
+saku_files_validation = testing(saku_files)
+
+# make training-dataset and validation-dataset of saku-data, both with data augmentation
+saku_training_dataset = make_dataset_for_CNN(files = saku_files_training, train = TRUE)
+saku_validation_dataset = make_dataset_for_CNN(files = saku_files_validation, train = FALSE)
+
+inspect_both_datasets(saku_training_dataset, saku_validation_dataset)
 
 
-### inspect the resulting data set:
-
-# get all tensors through the python iterator
-training_tensors <- training_dataset%>%as_iterator()%>%iterate()
-validation_tensors <- validation_dataset%>%as_iterator()%>%iterate()
-# check that the amount of data has increased:
-length(training_tensors) # number of tensors (1 tensor has 10 images as defined by 'batch_size' above)
-length(validation_tensors)
-
-dataset_iterator <- as_iterator(training_dataset)
-dataset_list <- iterate(dataset_iterator)
-dataset_list[[1]][[1]]
-
-dataset_iterator <- as_iterator(validation_dataset)
-dataset_list <- iterate(dataset_iterator)
-dataset_list[[1]][[1]]
-
-# *****************************************************************************************************
 
 ########################################### TRAIN THE CNN ###########################################
 
@@ -143,25 +117,25 @@ dataset_list[[1]][[1]]
 # JUST USE THIS WITH A GPU
 compile(
   u_net,
-  optimizer = optimizer_rmsprop(lr = 1e-5),
+  optimizer = optimizer_rmsprop(lr = 1e-5),  # TODO adapt learning rate
   loss = "binary_crossentropy",
   metrics = c(metric_binary_accuracy)
 )
 
 diagnostics <- fit(u_net,
                    training_dataset,
-                   epochs = 20,  # TODO adapt number of epochs
+                   epochs = 17,  # TODO adapt number of epochs
                    validation_data = validation_dataset)
 plot(diagnostics)
 
 
-
+### inspect one result:
 # compare the result to the mask on one of the validation samples:
 sample <- floor(runif(n = 1,min = 1,max = 38))
 img_path <- as.character(testing(files)[[sample,1]])
 mask_path <- as.character(testing(files)[[sample,2]])
 pimg <- read_tif(img_path)
-img <- magick::image_read(normalize_tiff(pimg[,,c(3,2,1)]))
+img <- magick::image_read(normalize_tif(pimg[,,c(3,2,1)]))
 mask <- magick::image_read(mask_path)
 # 'object' is the CNN which will be used for prediction:
 pred <- magick::image_read(as.raster(predict(object = u_net, validation_dataset)[sample,,,]))
@@ -170,15 +144,12 @@ out <- magick::image_append(c(
   magick::image_append(mask, stack = TRUE),
   magick::image_append(img, stack = TRUE),
   magick::image_append(pred, stack = TRUE)
-)
-)
-
+))
 plot(out)
 
 
-# *****************************************************************************************************
 
-########################################## PREDICTION DATA ##########################################
+########################################## PREDICTION ##########################################
 
 # make subsets of the image on which to predict:
 etna_full <- stack(paste(getwd(), "/etna_data/etna_b2_b3_b4_b8_b12.tif", sep = ""))
@@ -188,8 +159,7 @@ etna_subsets = dl_subsets(inputrst = etna_full,
                           targetname = "etna_subset_")
 
 
-#################################### PREDICT WITH THE TRAINED CNN ####################################
-
+# TODO use function make_dataset_for_CNN OR change its signature
 # predict on these subsets with the trained CNN:
 prediction_dataset <- dl_prepare_data_tif(train = FALSE,
                                           predict = TRUE,
