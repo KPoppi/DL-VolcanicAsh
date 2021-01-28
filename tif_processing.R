@@ -1,3 +1,8 @@
+# Code for study project "Einsatz von Cloud Computing Services fuer Deep Learning in der Fernerkundung"
+# in the winter semester 2020/2021 at the University of Muenster
+# by Fabian Fermazin and Katharina Poppinga
+
+
 # loads a TIF-file and makes an array out of it
 # with package 'stars'
 # gotten from https://pad.uni-muenster.de/***
@@ -12,7 +17,7 @@ read_tif <- function(f, mask=FALSE) {
 }
 
 
-# TODO
+# TODO desc
 reduce_channels <- function(arr ,channels) {
   arr = arr[,,(channels)]
   return (arr)
@@ -40,7 +45,6 @@ dl_prepare_data_tif <- function(files, train, predict=FALSE, subsets_path=NULL, 
 
     # array to tensor: create a tf_dataset from the first two coloumns of data.frame (ignoring area number used for splitting during data preparation),
     # TODO das stimmt nicht?: Ueberpruefen: "right now still containing only paths to images"
-
     dataset <- tensor_slices_dataset(files[,1:2])
 
     #convert to float32:
@@ -115,6 +119,7 @@ dl_prepare_data_tif <- function(files, train, predict=FALSE, subsets_path=NULL, 
   else {
     # make sure subsets are read in correct order so that they can later be reassambled correctly
     # needs files to be named accordingly (only number)
+    # TODO gives error when subset names are not just numbers and cannot order them right (--> 1, 10, 100, ..., 2, ...)
     o <- order(as.numeric(tools::file_path_sans_ext(basename(list.files(subsets_path)))))
     subset_list <- list.files(subsets_path, full.names = T)[o]
 
@@ -129,7 +134,7 @@ dl_prepare_data_tif <- function(files, train, predict=FALSE, subsets_path=NULL, 
 
 
 # small linear normalization function because the normalize function from R seems to have trouble preserving RGB
-normalize_tiff <- function(img){
+normalize_tif <- function(img){
   n_image = img
   for(val in 1:dim(n_image)[3]){
     n_image[,,val] = ( (n_image[,,val] - min(n_image[,,val]))*((1)/((max(n_image[,,val])) - (min(n_image[,,val]))) ) )
