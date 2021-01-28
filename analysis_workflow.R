@@ -50,7 +50,7 @@ saku_subsets = dl_subsets(inputrst = saku_full,
                           targetdir = (paste(getwd(), "/sakurajima_data/pixel-based/train/imgs/", sep = "")),
                           targetname = "saku_subset_")
 
-saku_mask <- stack(paste(getwd(), "/sakurajima_data/etna_mask.tif", sep = ""))
+saku_mask <- stack(paste(getwd(), "/sakurajima_data/saku_mask.tif", sep = ""))
 saku_mask_subsets = dl_subsets(inputrst = saku_mask,
                                targetsize = c(100,100),  # TODO adapt targetsize
                                targetdir = (paste(getwd(), "/sakurajima_data/pixel-based/train/masks/", sep = "")),
