@@ -3,6 +3,7 @@
 # by Fabian Fermazin and Katharina Poppinga
 
 #install.packages(c("reticulate", "tensorflow", "keras", "purrr", "rsample", "abind", "sf", "stars", "tfdatasets", "digest", "ggplot2", "sp", "raster", "mapview", "gdalUtils", "magick"))
+
 libraries = c("reticulate", "tensorflow", "keras", "purrr", "rsample", "abind", "sf", "stars", "tfdatasets", "digest", "ggplot2", "sp", "raster", "mapview", "gdalUtils", "magick")
 lapply(libraries, require, character.only = TRUE)
 
@@ -46,6 +47,7 @@ etna_mask_subsets = dl_subsets(inputrst = etna_mask,
 # TODO saku_full <- stack(paste(getwd(), "/etna_data/saku_b2_b3_b4_b8_b12.tif", sep = ""))
 # TODO suwa_full <- stack(paste(getwd(), "/etna_data/suwa_b2_b3_b4_b8_b12.tif", sep = ""))
 
+
 # TODO write functionality to read 'etna_subsets', needed for rebuild_img
 
 
@@ -81,11 +83,11 @@ files_validation$mask <- lapply(files_validation$mask, read_tif, TRUE)
 # prepare data for training (apply data augmentation)
 training_dataset <- dl_prepare_data_tif(files_training,
                                         train = TRUE,
-                                        model_input_shape = c(100,100),  # TODO adapt model_input_shape
+                                        model_input_shape = c(100,100),
                                         batch_size = 10L)
 validation_dataset <- dl_prepare_data_tif(files_validation,
                                           train = FALSE,
-                                          model_input_shape = c(100,100),  # TODO adapt model_input_shape
+                                          model_input_shape = c(100,100),
                                           batch_size = 10L)
 
 
@@ -122,17 +124,18 @@ compile(
 
 diagnostics <- fit(u_net,
                    training_dataset,
-                   epochs = 15,  # TODO adapt number of epochs
+                   epochs = 20,  # TODO adapt number of epochs
                    validation_data = validation_dataset)
 plot(diagnostics)
 
 
 
 # compare the result to the mask on one of the validation samples:
-sample <- floor(runif(n = 1,min = 1,max = 4))
+sample <- floor(runif(n = 1,min = 1,max = 38))
 img_path <- as.character(testing(files)[[sample,1]])
 mask_path <- as.character(testing(files)[[sample,2]])
-img <- magick::image_read(img_path)
+pimg <- read_tif(img_path)
+img <- magick::image_read(normalize_tiff(pimg[,,c(3,2,1)]))
 mask <- magick::image_read(mask_path)
 # 'object' is the CNN which will be used for prediction:
 pred <- magick::image_read(as.raster(predict(object = u_net, validation_dataset)[sample,,,]))

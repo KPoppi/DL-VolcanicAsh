@@ -41,6 +41,7 @@ dl_subsets <- function(inputrst, targetsize, targetdir, targetname, img_info_onl
     setTxtProgressBar(pb, i)
     e1  <- extent(agg_poly[agg_poly$polis==i,])
     subs <- suppressMessages(crop(rst_cropped,e1))
+
     writeRaster(subs, filename=paste0(targetdir, targetname, i, ".tif"), overwrite=TRUE) 
     return(c(extent(rst_cropped),crs(rst_cropped)))
   }
