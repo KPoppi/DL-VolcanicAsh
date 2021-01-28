@@ -4,7 +4,6 @@
 
 
 #install.packages(c("reticulate", "tensorflow", "keras", "purrr", "rsample", "abind", "sf", "stars", "tfdatasets", "digest", "ggplot2", "sp", "raster", "mapview", "gdalUtils", "magick"))
-
 libraries = c("reticulate", "tensorflow", "keras", "purrr", "rsample", "abind", "sf", "stars", "tfdatasets", "digest", "ggplot2", "sp", "raster", "mapview", "gdalUtils", "magick")
 lapply(libraries, require, character.only = TRUE)
 
@@ -59,7 +58,6 @@ saku_mask_subsets = dl_subsets(inputrst = saku_mask,
 #                          targetsize = c(100,100),  # TODO adapt targetsize
 #                          targetdir = (paste(getwd(), "/suwanosejima_data/pixel-based/train/imgs/", sep = "")),
 #                          targetname = "suwa_subset_")
-
 
 
 # TODO write functionality to read 'etna_subsets' etc., needed for rebuild_img
@@ -122,61 +120,78 @@ compile(
   metrics = c(metric_binary_accuracy)
 )
 
+# train with etna-data:
 diagnostics <- fit(u_net,
-                   training_dataset,
+                   etna_training_dataset,
                    epochs = 17,  # TODO adapt number of epochs
-                   validation_data = validation_dataset)
+                   validation_data = etna_validation_dataset)
+plot(diagnostics)
+
+# train with saku-data:
+diagnostics <- fit(u_net,
+                   saku_training_dataset,
+                   epochs = 17,  # TODO adapt number of epochs
+                   validation_data = saku_validation_dataset)
 plot(diagnostics)
 
 
-### inspect one result:
-# compare the result to the mask on one of the validation samples:
-sample <- floor(runif(n = 1,min = 1,max = 38))
-img_path <- as.character(testing(files)[[sample,1]])
-mask_path <- as.character(testing(files)[[sample,2]])
-pimg <- read_tif(img_path)
-img <- magick::image_read(normalize_tif(pimg[,,c(3,2,1)]))
-mask <- magick::image_read(mask_path)
-# 'object' is the CNN which will be used for prediction:
-pred <- magick::image_read(as.raster(predict(object = u_net, validation_dataset)[sample,,,]))
-
-out <- magick::image_append(c(
-  magick::image_append(mask, stack = TRUE),
-  magick::image_append(img, stack = TRUE),
-  magick::image_append(pred, stack = TRUE)
-))
-plot(out)
+### inspect one result
+# one result-subset of etna:
+inspect_one_result_subset(files = etna_files, validation_dataset = etna_validation_dataset, max = 38)
+# one result-subset of saku:
+inspect_one_result_subset(files = saku_files, validation_dataset = saku_validation_dataset, max = 20)
 
 
 
 ########################################## PREDICTION ##########################################
 
+# *************************************** ETNA ***************************************
 # make subsets of the image on which to predict:
-etna_full <- stack(paste(getwd(), "/etna_data/etna_b2_b3_b4_b8_b12.tif", sep = ""))
-etna_subsets = dl_subsets(inputrst = etna_full,
-                          targetsize = c(448,448),
-                          targetdir = (paste(getwd(), "/etna_data/pixel-based/prediction/imgs/", sep = "")),  # must already exist
-                          targetname = "etna_subset_")
+etna_full_pred <- stack(paste(getwd(), "/etna_data/suwa_b2_b3_b4_b8_b12.tif", sep = ""))  # TODO anpassen
+etna_subsets_pred = dl_subsets(inputrst = suwa_full_pred,
+                               targetsize = c(100,100),
+                               targetdir = (paste(getwd(), "/etna_data/pixel-based/prediction/imgs/", sep = "")),  # must already exist
+                               targetname = "")
 
+# TODO
+# ...
+
+# *************************************** SAKU ***************************************
+saku_full_pred <- stack(paste(getwd(), "/sakurajima_data/suwa_b2_b3_b4_b8_b12.tif", sep = ""))  # TODO anpassen
+saku_subsets_pred = dl_subsets(inputrst = saku_full_pred,
+                               targetsize = c(100,100),
+                               targetdir = (paste(getwd(), "/sakurajima_data/pixel-based/prediction/imgs/", sep = "")),  # must already exist
+                               targetname = "")
+
+# TODO
+# ...
+
+# *************************************** SUWA ***************************************
+suwa_full_pred <- stack(paste(getwd(), "/suwanosejima_data/suwa_b2_b3_b4_b8_b12.tif", sep = ""))  # TODO anpassen
+suwa_subsets_pred = dl_subsets(inputrst = suwa_full_pred,
+                               targetsize = c(100,100),
+                               targetdir = (paste(getwd(), "/suwanosejima_data/pixel-based/prediction/imgs/", sep = "")),  # must already exist
+                               targetname = "")
 
 # TODO use function make_dataset_for_CNN OR change its signature
 # predict on these subsets with the trained CNN:
-prediction_dataset <- dl_prepare_data_tif(train = FALSE,
-                                          predict = TRUE,
-                                          subsets_path = (paste(getwd(), "/etna_data/pixel-based/prediction/imgs/", sep = "")),
-                                          model_input_shape = c(448,448),  # TODO adapt model_input_shape
-                                          batch_size = 5L)  # TODO adapt batch size ??
+suwa_prediction_dataset <- dl_prepare_data_tif(train = FALSE,
+                                               predict = TRUE,
+                                               subsets_path = (paste(getwd(), "/suwanosejima_data/pixel-based/prediction/imgs/", sep = "")),
+                                               model_input_shape = c(100,100),  # TODO adapt model_input_shape
+                                               batch_size = 10L)  # TODO adapt batch size ??
 
-system.time(predictions <- predict(u_net, prediction_dataset))
+# TODO ORDERING DOES NOT WORK PROPERLY:
+#order(as.numeric(tools::file_path_sans_ext(basename(list.files((paste(getwd(), "/suwanosejima_data/pixel-based/prediction/imgs/", sep = "")))))))
+
+system.time(suwa_predictions <- predict(u_net, suwa_prediction_dataset))
 save_model_hdf5(u_net, filepath = "./u_net.h5")
 
 # assemble the predictions:
-rebuild_img(pred_subsets = predictions,
-            out_path = (paste(getwd(), "/etna_data/pixel-based/prediction/", sep = "")),  # here the output will be written (folder 'out' will be created)
-            target_rst = etna_subsets)  # output of 'dl_subsets'
+rebuild_img(pred_subsets = suwa_predictions,
+            out_path = (paste(getwd(), "/suwanosejima_data/pixel-based/prediction/", sep = "")),  # here the output will be written (folder 'out' will be created)
+            target_rst = suwa_subsets_pred)  # output of 'dl_subsets'
 
-
-# *****************************************************************************************************
 
 
 ######################################################################################################

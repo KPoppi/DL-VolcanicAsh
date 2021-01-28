@@ -119,6 +119,7 @@ dl_prepare_data_tif <- function(files, train, predict=FALSE, subsets_path=NULL, 
   else {
     # make sure subsets are read in correct order so that they can later be reassambled correctly
     # needs files to be named accordingly (only number)
+    # TODO gives error when subset names are not just numbers and cannot order them right (--> 1, 10, 100, ..., 2, ...)
     o <- order(as.numeric(tools::file_path_sans_ext(basename(list.files(subsets_path)))))
     subset_list <- list.files(subsets_path, full.names = T)[o]
 

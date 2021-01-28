@@ -45,3 +45,24 @@ inspect_both_datasets <- function(training_dataset, validation_dataset) {
   print(length(training_tensors)) # number of tensors (1 tensor has 10 images as defined by 'batch_size' above)
   print(length(validation_tensors))
 }
+
+
+# TODO desc
+inspect_one_result_subset <- function(files, validation_dataset, max) {
+  # compare the result to the mask on one of the validation samples:
+  sample <- floor(runif(n = 1, min = 1, max = max))
+  img_path <- as.character(testing(files)[[sample,1]])
+  mask_path <- as.character(testing(files)[[sample,2]])
+  pimg <- read_tif(img_path)
+  img <- magick::image_read(normalize_tif(pimg[,,c(3,2,1)]))
+  mask <- magick::image_read(mask_path)
+  # 'object' is the CNN which will be used for prediction:
+  pred <- magick::image_read(as.raster(predict(object = u_net, validation_dataset)[sample,,,]))
+  
+  out <- magick::image_append(c(
+    magick::image_append(mask, stack = TRUE),
+    magick::image_append(img, stack = TRUE),
+    magick::image_append(pred, stack = TRUE)
+  ))
+  plot(out)
+}
