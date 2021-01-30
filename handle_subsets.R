@@ -76,7 +76,7 @@ rebuild_img <- function(pred_subsets, out_path, target_rst) {
   dir.create(path = result_folder)
   
   #for each tile, create a stars from corresponding predictions, 
-  #assign dimensions using original/target image, and save as tif: 
+  #assign dimensions using original/target image, and save as TIF: 
   for (crow in 1:tiles_rows){
     for (ccol in 1:tiles_cols){
       i <- (crow-1)*tiles_cols + (ccol-1) +1 
