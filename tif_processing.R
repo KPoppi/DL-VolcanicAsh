@@ -117,15 +117,7 @@ dl_prepare_data_tif <- function(files, train, predict=FALSE, subsets_path=NULL, 
 
   ###### preparing data for real prediction (no validation and no data augmentation): ######
   else {
-    # make sure subsets are read in correct order so that they can later be reassambled correctly
-    # needs files to be named accordingly (only number)
-    # TODO cannot order them right (--> 1, 10, 100, ..., 2, ...)
-    # TODO sorting for TIFs instead of paths
-    #o <- order(as.numeric(tools::file_path_sans_ext(basename(list.files(files)))))
-    #subset_list <- list.files(subsets_path, full.names = T)[o]
-    
     dataset <- tensor_slices_dataset(files)
-    #dataset <- tensor_slices_dataset(subset_list)
     
     dataset <- dataset_map(dataset, function(.x) list_modify(.x, img = tf$image$convert_image_dtype(.x$img, dtype = tf$float64)))
     dataset <- dataset_map(dataset, function(.x) list_modify(.x, img = tf$image$resize(.x$img, size = shape(model_input_shape[1], model_input_shape[2]))))

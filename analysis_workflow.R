@@ -67,7 +67,6 @@ saku_mask_subsets = dl_subsets(inputrst = saku_mask,
 
 # *************************************** ETNA ***************************************
 # make data.frame with full paths of etna-images and their masks
-# TODO make one for both volcanos?
 etna_files <- data.frame(
   img = list.files(path = (paste(getwd(), "/etna_data/pixel-based/train/imgs/", sep = "")), full.names=TRUE),
   mask = list.files(path = (paste(getwd(), "/etna_data/pixel-based/train/masks/", sep = "")), full.names=TRUE)
@@ -147,61 +146,85 @@ inspect_one_result_subset(files = saku_files, validation_dataset = saku_validati
 
 # *************************************** ETNA ***************************************
 # make subsets of the image on which to predict:
-etna_full_pred <- stack(paste(getwd(), "/etna_data/suwa_b2_b3_b4_b8_b12.tif", sep = ""))  # TODO anpassen
-etna_subsets_pred = dl_subsets(inputrst = suwa_full_pred,
+# (just once but this variable 'etna_subsets_pred' is needed for reassembling the predictions)
+etna_full_pred <- stack(paste(getwd(), "/etna_data/etna_b2_b3_b4_b8_b12.tif", sep = ""))  # TODO anpassen
+etna_subsets_pred = dl_subsets(inputrst = etna_full_pred,
                                targetsize = c(100,100),
                                targetdir = (paste(getwd(), "/etna_data/pixel-based/prediction/imgs/", sep = "")),  # must already exist
                                targetname = "")
 
-# read subsets
-# TODO
-# ...
+# read and order subsets (their paths) in ascending order (order is needed for 'rebuild_img'-function) and write them into dataframe:
+etna_subsets_path = (paste(getwd(), "/etna_data/pixel-based/prediction/imgs/", sep = ""))
+o <- order(as.numeric(tools::file_path_sans_ext(basename(list.files(etna_subsets_path)))))
+etna_files_pred <- data.frame(
+  img = list.files(etna_subsets_path, full.names = T)[o]
+)
+
+# make prediction-dataset out of those subset-paths, without data augmentation
+etna_prediction_dataset = make_dataset_for_CNN(files = etna_files_pred, train = FALSE, predict = TRUE)
+
+# predict on this dataset with the trained CNN:
+system.time(etna_predictions <- predict(u_net,
+                                        etna_prediction_dataset))
+
+#save_model_hdf5(u_net, filepath = "./u_net.h5")
+
+# reassemble the predictions:
+rebuild_img(pred_subsets = etna_predictions,
+            out_path = (paste(getwd(), "/etna_data/pixel-based/prediction/", sep = "")),  # here the output will be written (folder 'out' will be created)
+            target_rst = etna_subsets_pred)  # output of 'dl_subsets'
+
 
 # *************************************** SAKU ***************************************
-saku_full_pred <- stack(paste(getwd(), "/sakurajima_data/suwa_b2_b3_b4_b8_b12.tif", sep = ""))  # TODO anpassen
+saku_full_pred <- stack(paste(getwd(), "/sakurajima_data/saku_b2_b3_b4_b8_b12.tif", sep = ""))  # TODO anpassen
 saku_subsets_pred = dl_subsets(inputrst = saku_full_pred,
                                targetsize = c(100,100),
                                targetdir = (paste(getwd(), "/sakurajima_data/pixel-based/prediction/imgs/", sep = "")),  # must already exist
                                targetname = "")
 
-# TODO
-# ...
+saku_subsets_path = (paste(getwd(), "/sakurajima_data/pixel-based/prediction/imgs/", sep = ""))
+o <- order(as.numeric(tools::file_path_sans_ext(basename(list.files(saku_subsets_path)))))
+saku_files_pred <- data.frame(
+  img = list.files(saku_subsets_path, full.names = T)[o]
+)
+
+saku_prediction_dataset = make_dataset_for_CNN(files = saku_files_pred, train = FALSE, predict = TRUE)
+
+system.time(saku_predictions <- predict(u_net,
+                                        saku_prediction_dataset))
+
+#save_model_hdf5(u_net, filepath = "./u_net.h5")
+
+# reassemble the predictions:
+rebuild_img(pred_subsets = saku_predictions,
+            out_path = (paste(getwd(), "/sakurajima_data/pixel-based/prediction/", sep = "")),
+            target_rst = saku_subsets_pred)
+
 
 # *************************************** SUWA ***************************************
 suwa_full_pred <- stack(paste(getwd(), "/suwanosejima_data/suwa_b2_b3_b4_b8_b12.tif", sep = ""))  # TODO anpassen
 suwa_subsets_pred = dl_subsets(inputrst = suwa_full_pred,
                                targetsize = c(100,100),
-                               targetdir = (paste(getwd(), "/suwanosejima_data/pixel-based/prediction/imgs/", sep = "")),  # must already exist
+                               targetdir = (paste(getwd(), "/suwanosejima_data/pixel-based/prediction/imgs/", sep = "")),
                                targetname = "")
 
-
-# read subsets
+suwa_subsets_path = (paste(getwd(), "/suwanosejima_data/pixel-based/prediction/imgs/", sep = ""))
+o <- order(as.numeric(tools::file_path_sans_ext(basename(list.files(suwa_subsets_path)))))
 suwa_files_pred <- data.frame(
-  img = list.files(path = (paste(getwd(), "/suwanosejima_data/pixel-based/prediction/imgs/", sep = "")), full.names=TRUE)
+  img = list.files(suwa_subsets_path, full.names = T)[o]
 )
-suwa_files_pred$img <- lapply(suwa_files_pred$img, read_tif)
-suwa_files_pred$img <- lapply(suwa_files_pred$img, function(x){x/10000})
 
-# TODO use function make_dataset_for_CNN OR change its signature
-# predict on these subsets with the trained CNN:
-suwa_prediction_dataset <- dl_prepare_data_tif(files = suwa_files_pred,
-                                               train = FALSE,
-                                               predict = TRUE,
-                                               #subsets_path = (paste(getwd(), "/suwanosejima_data/pixel-based/prediction/imgs/", sep = "")),
-                                               model_input_shape = c(100,100),  # TODO adapt model_input_shape
-                                               batch_size = 10L)  # TODO adapt batch size ??
-
-# TODO SORTING DOES NOT WORK FOR TIFS
+suwa_prediction_dataset = make_dataset_for_CNN(files = suwa_files_pred, train = FALSE, predict = TRUE)
 
 system.time(suwa_predictions <- predict(u_net,
                                         suwa_prediction_dataset))
 
-save_model_hdf5(u_net, filepath = "./u_net.h5")
+#save_model_hdf5(u_net, filepath = "./u_net.h5")
 
 # reassemble the predictions:
 rebuild_img(pred_subsets = suwa_predictions,
-            out_path = (paste(getwd(), "/suwanosejima_data/pixel-based/prediction/", sep = "")),  # here the output will be written (folder 'out' will be created)
-            target_rst = suwa_subsets_pred)  # output of 'dl_subsets'
+            out_path = (paste(getwd(), "/suwanosejima_data/pixel-based/prediction/", sep = "")),
+            target_rst = suwa_subsets_pred)
 
 
 
