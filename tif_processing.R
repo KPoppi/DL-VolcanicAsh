@@ -26,7 +26,7 @@ reduce_channels <- function(arr ,channels) {
 
 # preprocessing of TIF-files given in data.frames (arrays)
 # gotten from https://pad.uni-muenster.de/***
-# author: Christian Knoth
+# author: Christian Knoth (but slightly adapted by us)
 # uses code from: https://blogs.rstudio.com/ai/posts/2019-08-23-unet/ (accessed 2020-08-12)
 dl_prepare_data_tif <- function(files, train, predict=FALSE, subsets_path=NULL, model_input_shape = c(448,448), batch_size = 10L) {
 
@@ -117,15 +117,10 @@ dl_prepare_data_tif <- function(files, train, predict=FALSE, subsets_path=NULL, 
 
   ###### preparing data for real prediction (no validation and no data augmentation): ######
   else {
-    # make sure subsets are read in correct order so that they can later be reassambled correctly
-    # needs files to be named accordingly (only number)
-    # TODO gives error when subset names are not just numbers and cannot order them right (--> 1, 10, 100, ..., 2, ...)
-    o <- order(as.numeric(tools::file_path_sans_ext(basename(list.files(subsets_path)))))
-    subset_list <- list.files(subsets_path, full.names = T)[o]
-
-    dataset <- tensor_slices_dataset(subset_list)
-    dataset <- dataset_map(dataset, function(.x) tf$image$convert_image_dtype(.x, dtype = tf$float64))
-    dataset <- dataset_map(dataset, function(.x) tf$image$resize(.x, size = shape(model_input_shape[1], model_input_shape[2])))
+    dataset <- tensor_slices_dataset(files)
+    
+    dataset <- dataset_map(dataset, function(.x) list_modify(.x, img = tf$image$convert_image_dtype(.x$img, dtype = tf$float64)))
+    dataset <- dataset_map(dataset, function(.x) list_modify(.x, img = tf$image$resize(.x$img, size = shape(model_input_shape[1], model_input_shape[2]))))
     dataset <- dataset_batch(dataset, batch_size)
     dataset <- dataset_map(dataset, unname)
   }
