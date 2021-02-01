@@ -2,27 +2,27 @@
 # author: Christian Knoth
 dl_subsets <- function(inputrst, targetsize, targetdir, targetname, img_info_only = FALSE, is_mask = FALSE) {
   require(raster)
-  
+
   # determine next number of quadrats in x and y direction, by simple rounding
   targetsizeX <- targetsize[1]
   targetsizeY <- targetsize[2]
   inputX <- ncol(inputrst)
   inputY <- nrow(inputrst)
-  
-  # determine dimensions of raster so that 
+
+  # determine dimensions of raster so that
   # it can be split by whole number of subsets (by shrinking it)
   while(inputX%%targetsizeX!=0){
-    inputX = inputX-1  
+    inputX = inputX-1
   }
   while(inputY%%targetsizeY!=0){
-    inputY = inputY-1    
+    inputY = inputY-1
   }
-  
+
   # determine difference
   diffX <- ncol(inputrst)-inputX
   diffY <- nrow(inputrst)-inputY
-  
-  # determine new dimensions of raster and crop, 
+
+  # determine new dimensions of raster and crop,
   # cutting evenly on all sides if possible
   newXmin <- floor(diffX/2)
   newXmax <- ncol(inputrst)-ceiling(diffX/2)-1
@@ -41,8 +41,8 @@ dl_subsets <- function(inputrst, targetsize, targetdir, targetname, img_info_onl
     setTxtProgressBar(pb, i)
     e1  <- extent(agg_poly[agg_poly$polis==i,])
     subs <- suppressMessages(crop(rst_cropped,e1))
-    
-    writeRaster(subs, filename=paste0(targetdir, targetname, i, ".tif"), overwrite=TRUE) 
+
+    writeRaster(subs, filename=paste0(targetdir, targetname, i, ".tif"), overwrite=TRUE)
     #return(c(extent(rst_cropped),crs(rst_cropped)))
   }
   close(pb)
@@ -60,12 +60,16 @@ rebuild_img <- function(pred_subsets, out_path, target_rst) {
   require(raster)
   require(gdalUtils)
   require(stars)
-  
+
+  for(mat in 1:dim(pred_subsets)[1]){
+    pred_subsets[mat,,,] = t(pred_subsets[mat,,,])
+  }
+
   subset_pixels_x <- ncol(pred_subsets[1,,,])
   subset_pixels_y <- nrow(pred_subsets[1,,,])
   tiles_rows <- nrow(target_rst)/subset_pixels_y
   tiles_cols <- ncol(target_rst)/subset_pixels_x
-  
+
   # load target image to determine dimensions
   target_stars <- st_as_stars(target_rst,proxy=F)
   #prepare subfolder for output
@@ -74,19 +78,19 @@ rebuild_img <- function(pred_subsets, out_path, target_rst) {
     unlink(result_folder,recursive = T)
   }
   dir.create(path = result_folder)
-  
-  #for each tile, create a stars from corresponding predictions, 
-  #assign dimensions using original/target image, and save as TIF: 
+
+  #for each tile, create a stars from corresponding predictions,
+  #assign dimensions using original/target image, and save as TIF:
   for (crow in 1:tiles_rows){
     for (ccol in 1:tiles_cols){
-      i <- (crow-1)*tiles_cols + (ccol-1) +1 
+      i <- (crow-1)*tiles_cols + (ccol-1) +1
       dimx <- c(((ccol-1)*subset_pixels_x+1),(ccol*subset_pixels_x))
       dimy <- c(((crow-1)*subset_pixels_y+1),(crow*subset_pixels_y))
       cstars <- st_as_stars(t(pred_subsets[i,,,1]))
       attr(cstars,"dimensions")[[2]]$delta=-1
       #set dimensions using original raster
       st_dimensions(cstars) <- st_dimensions(target_stars[,dimx[1]:dimx[2],dimy[1]:dimy[2]])[1:2]
-      write_stars(cstars,dsn = paste0(result_folder,"/_out_",i,".tif")) 
+      write_stars(cstars,dsn = paste0(result_folder,"/_out_",i,".tif"))
     }
   }
   starstiles <- as.vector(list.files(result_folder,full.names = T),mode = "character")
