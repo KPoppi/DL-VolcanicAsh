@@ -61,6 +61,7 @@ rebuild_img <- function(pred_subsets, out_path, target_rst) {
   require(gdalUtils)
   require(stars)
 
+  # flip each subset
   for(mat in 1:dim(pred_subsets)[1]){
     pred_subsets[mat,,,] = t(pred_subsets[mat,,,])
   }
