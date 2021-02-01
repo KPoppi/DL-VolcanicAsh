@@ -22,6 +22,9 @@ source("data_processing.R")
 source("tif_processing.R")
 source("CNN_pixel-based.R")
 
+#u_net <- load_model_hdf5("./u_net_etna.h5")
+#u_net <- load_model_hdf5("./u_net_saku.h5")
+#u_net <- load_model_hdf5("./u_net_etna_saku.h5")
 
 #################################### TRAINING AND VALIDATION DATA ####################################
 
@@ -106,7 +109,6 @@ saku_validation_dataset = make_dataset_for_CNN(files = saku_files_validation, tr
 inspect_both_datasets(saku_training_dataset, saku_validation_dataset)
 
 
-
 ########################################### TRAIN THE CNN ###########################################
 
 # the network is written in "CNN_pixel-based.R"
@@ -126,6 +128,8 @@ diagnostics <- fit(u_net,
                    validation_data = etna_validation_dataset)
 plot(diagnostics)
 
+save_model_hdf5(u_net, filepath = "./u_net_etna.h5")
+
 # train with saku-data:
 diagnostics <- fit(u_net,
                    saku_training_dataset,
@@ -133,6 +137,8 @@ diagnostics <- fit(u_net,
                    validation_data = saku_validation_dataset)
 plot(diagnostics)
 
+save_model_hdf5(u_net, filepath = "./u_net_saku.h5")
+#save_model_hdf5(u_net, filepath = "./u_net_etna_saku.h5")
 
 ### inspect one result
 # one result-subset of etna:
@@ -167,8 +173,6 @@ etna_prediction_dataset = make_dataset_for_CNN(files = etna_files_pred, train = 
 system.time(etna_predictions <- predict(u_net,
                                         etna_prediction_dataset))
 
-#save_model_hdf5(u_net, filepath = "./u_net.h5")
-
 # reassemble the predictions:
 rebuild_img(pred_subsets = etna_predictions,
             out_path = (paste(getwd(), "/etna_data/pixel-based/prediction/", sep = "")),  # here the output will be written (folder 'out' will be created)
@@ -192,8 +196,6 @@ saku_prediction_dataset = make_dataset_for_CNN(files = saku_files_pred, train = 
 
 system.time(saku_predictions <- predict(u_net,
                                         saku_prediction_dataset))
-
-#save_model_hdf5(u_net, filepath = "./u_net.h5")
 
 # reassemble the predictions:
 rebuild_img(pred_subsets = saku_predictions,
@@ -219,13 +221,10 @@ suwa_prediction_dataset = make_dataset_for_CNN(files = suwa_files_pred, train = 
 system.time(suwa_predictions <- predict(u_net,
                                         suwa_prediction_dataset))
 
-#save_model_hdf5(u_net, filepath = "./u_net.h5")
-
 # reassemble the predictions:
 rebuild_img(pred_subsets = suwa_predictions,
             out_path = (paste(getwd(), "/suwanosejima_data/pixel-based/prediction/", sep = "")),
             target_rst = suwa_subsets_pred)
-
 
 
 ######################################################################################################
