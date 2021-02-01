@@ -3,8 +3,9 @@
 # by Fabian Fermazin and Katharina Poppinga
 
 
-# TODO desc
+# takes file-paths of images and prepares the dataset with the corresponding TIFs
 # input-parameter: train and predict are boolean
+# applies data augmentation if train = TRUE
 make_dataset_for_CNN <- function(files, train, predict = FALSE, subsets_path = NULL) {
   
   # replace the paths with the corresponding real raster data:
@@ -47,7 +48,8 @@ inspect_both_datasets <- function(training_dataset, validation_dataset) {
 }
 
 
-# TODO desc
+# plots one random mask-subset with its corresponding image subset
+# and their corresponding prediction-result-subset
 inspect_one_result_subset <- function(files, validation_dataset, max) {
   # compare the result to the mask on one of the validation samples:
   sample <- floor(runif(n = 1, min = 1, max = max))

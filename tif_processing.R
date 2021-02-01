@@ -44,7 +44,6 @@ dl_prepare_data_tif <- function(files, train, predict=FALSE, subsets_path=NULL, 
     }
 
     # array to tensor: create a tf_dataset from the first two coloumns of data.frame (ignoring area number used for splitting during data preparation),
-    # TODO das stimmt nicht?: Ueberpruefen: "right now still containing only paths to images"
     dataset <- tensor_slices_dataset(files[,1:2])
 
     #convert to float32:
@@ -108,7 +107,6 @@ dl_prepare_data_tif <- function(files, train, predict=FALSE, subsets_path=NULL, 
     }
 
     # train in batches; batch size might need to be adapted depending on available memory
-
     dataset <- dataset_batch(dataset, batch_size)
 
     # output needs to be unnamed

@@ -31,8 +31,8 @@ conc_tensor1 <- layer_conv_2d(unet_tensor, filters = 128, kernel_size = c(3,3), 
 unet_tensor <- layer_max_pooling_2d(conc_tensor1)
 
 #"bottom curve" of unet
-unet_tensor <- layer_conv_2d(unet_tensor,filters = 256, kernel_size = c(3,3), padding = "same", activation = "relu")
-unet_tensor <- layer_conv_2d(unet_tensor,filters = 256, kernel_size = c(3,3), padding = "same", activation = "relu")
+unet_tensor <- layer_conv_2d(unet_tensor, filters = 256, kernel_size = c(3,3), padding = "same", activation = "relu")
+unet_tensor <- layer_conv_2d(unet_tensor, filters = 256, kernel_size = c(3,3), padding = "same", activation = "relu")
 
 
 ### expanding path ###
