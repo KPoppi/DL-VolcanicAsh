@@ -17,10 +17,19 @@ keras::is_keras_available()
 setwd("/home/sp_gruppe2/StudyProject/DL-VolcanicAsh") # path for AWS-instance
 getwd()
 
+load("~/StudyProject/DL-VolcanicAsh/workspace.RData")
+rm(u_net)
+
+#size = c(120,120)
+size = c(100,100)
+#shape = c(120,120,5)
+shape = c(100,100,5)
+
 source("handle_subsets.R")
 source("data_processing.R")
 source("tif_processing.R")
-source("CNN_pixel-based.R")
+source("CNN.R")
+#source("CNN_2.R")
 
 #u_net <- load_model_hdf5("./u_net_etna.h5")
 #u_net <- load_model_hdf5("./u_net_saku.h5")
@@ -32,38 +41,28 @@ source("CNN_pixel-based.R")
 # ETNA
 etna_full <- stack(paste(getwd(), "/etna_data/etna_b2_b3_b4_b8_b12.tif", sep = ""))
 etna_subsets = dl_subsets(inputrst = etna_full,
-                          targetsize = c(100,100),  # TODO adapt targetsize
+                          targetsize = size,
                           targetdir = (paste(getwd(), "/etna_data/pixel-based/train/imgs/", sep = "")),  # must already exist
                           targetname = "etna_subset_")
 
 etna_mask <- stack(paste(getwd(), "/etna_data/etna_mask.tif", sep = ""))
 etna_mask_subsets = dl_subsets(inputrst = etna_mask,
-                               targetsize = c(100,100),  # TODO adapt targetsize
+                               targetsize = size,
                                targetdir = (paste(getwd(), "/etna_data/pixel-based/train/masks/", sep = "")),
                                targetname = "etna_mask_subset_")
 
 # SAKURAJIMA
 saku_full <- stack(paste(getwd(), "/sakurajima_data/saku_b2_b3_b4_b8_b12.tif", sep = ""))
 saku_subsets = dl_subsets(inputrst = saku_full,
-                          targetsize = c(100,100),  # TODO adapt targetsize
+                          targetsize = size,
                           targetdir = (paste(getwd(), "/sakurajima_data/pixel-based/train/imgs/", sep = "")),
                           targetname = "saku_subset_")
 
 saku_mask <- stack(paste(getwd(), "/sakurajima_data/saku_mask.tif", sep = ""))
 saku_mask_subsets = dl_subsets(inputrst = saku_mask,
-                               targetsize = c(100,100),  # TODO adapt targetsize
+                               targetsize = size,
                                targetdir = (paste(getwd(), "/sakurajima_data/pixel-based/train/masks/", sep = "")),
                                targetname = "saku_mask_subset_")
-
-# TODO SUWANOSEJIMA
-#suwa_full <- stack(paste(getwd(), "/suwanosejima_data/suwa_b2_b3_b4_b8_b12.tif", sep = ""))
-#suwa_subsets = dl_subsets(inputrst = suwa_full,
-#                          targetsize = c(100,100),  # TODO adapt targetsize
-#                          targetdir = (paste(getwd(), "/suwanosejima_data/pixel-based/train/imgs/", sep = "")),
-#                          targetname = "suwa_subset_")
-
-
-# TODO write functionality to read 'etna_subsets' etc., needed for rebuild_img
 
 
 ### data preprocessing with data augmentation:
@@ -155,7 +154,7 @@ inspect_one_result_subset(files = saku_files, validation_dataset = saku_validati
 # (just once but this variable 'etna_subsets_pred' is needed for reassembling the predictions)
 etna_full_pred <- stack(paste(getwd(), "/etna_data/etna_b2_b3_b4_b8_b12.tif", sep = ""))  # TODO anpassen
 etna_subsets_pred = dl_subsets(inputrst = etna_full_pred,
-                               targetsize = c(100,100),
+                               targetsize = size,
                                targetdir = (paste(getwd(), "/etna_data/pixel-based/prediction/imgs/", sep = "")),  # must already exist
                                targetname = "")
 
@@ -182,7 +181,7 @@ rebuild_img(pred_subsets = etna_predictions,
 # *************************************** SAKU ***************************************
 saku_full_pred <- stack(paste(getwd(), "/sakurajima_data/saku_b2_b3_b4_b8_b12.tif", sep = ""))  # TODO anpassen
 saku_subsets_pred = dl_subsets(inputrst = saku_full_pred,
-                               targetsize = c(100,100),
+                               targetsize = size,
                                targetdir = (paste(getwd(), "/sakurajima_data/pixel-based/prediction/imgs/", sep = "")),  # must already exist
                                targetname = "")
 
@@ -206,7 +205,7 @@ rebuild_img(pred_subsets = saku_predictions,
 # *************************************** SUWA ***************************************
 suwa_full_pred <- stack(paste(getwd(), "/suwanosejima_data/suwa_b2_b3_b4_b8_b12.tif", sep = ""))  # TODO anpassen
 suwa_subsets_pred = dl_subsets(inputrst = suwa_full_pred,
-                               targetsize = c(100,100),
+                               targetsize = size,
                                targetdir = (paste(getwd(), "/suwanosejima_data/pixel-based/prediction/imgs/", sep = "")),
                                targetname = "")
 

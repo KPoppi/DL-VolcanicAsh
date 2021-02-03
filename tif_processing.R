@@ -62,7 +62,7 @@ dl_prepare_data_tif <- function(files, train, predict=FALSE, subsets_path=NULL, 
 
     # data augmentation performed on training set only
     if (train) {
-      # augmentation 1: flip left right, including random change of saturation, brightness and contrast
+      # augmentation 1: flip left right, including random change of brightness and contrast
       # for each record in dataset, only the img item is modified by the result of applying spectral_augmentation to it
       augmentation <- dataset_map(dataset, function(.x) list_modify(.x,
                                                                     img = spectral_augmentation(.x$img)
@@ -75,7 +75,7 @@ dl_prepare_data_tif <- function(files, train, predict=FALSE, subsets_path=NULL, 
 
       dataset_augmented <- dataset_concatenate(dataset,augmentation)
 
-      # augmentation 2: flip up down, including random change of saturation, brightness and contrast
+      # augmentation 2: flip up down, including random change of brightness and contrast
       augmentation <- dataset_map(dataset, function(.x) list_modify(.x,
                                                                     img = spectral_augmentation(.x$img)
       ))
@@ -86,7 +86,7 @@ dl_prepare_data_tif <- function(files, train, predict=FALSE, subsets_path=NULL, 
                                   
       dataset_augmented <- dataset_concatenate(dataset_augmented,augmentation)
 
-      # augmentation 3: flip left right AND up down, including random change of saturation, brightness and contrast
+      # augmentation 3: flip left right AND up down, including random change of brightness and contrast
       augmentation <- dataset_map(dataset, function(.x) list_modify(.x,
                                                                     img = spectral_augmentation(.x$img)
       ))

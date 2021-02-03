@@ -20,7 +20,7 @@ make_dataset_for_CNN <- function(files, train, predict = FALSE, subsets_path = N
   dataset <- dl_prepare_data_tif(files,
                                  train = train,
                                  predict = predict,
-                                 model_input_shape = c(100,100),
+                                 model_input_shape = size,
                                  batch_size = 10L)
   return(dataset)
 }

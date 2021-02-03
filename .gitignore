@@ -2,6 +2,7 @@ Volcanos.Rproj
 
 data_for_pixel-based.RData
 CNN_tile-based_all.R
+CNN_3.R
 
 etna_data/*
 sakurajima_data/*
