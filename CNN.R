@@ -18,7 +18,7 @@
 ### "contracting path" ###
 
 # input
-input_tensor <- layer_input(shape = c(100,100,5))  # TODO adapt shape
+input_tensor <- layer_input(shape = shape)
 
 #conv block 1
 unet_tensor <- layer_conv_2d(input_tensor, filters = 64, kernel_size = c(3,3), padding = "same", activation = "relu")
