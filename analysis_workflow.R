@@ -28,8 +28,8 @@ shape = c(100,100,5)
 source("handle_subsets.R")
 source("data_processing.R")
 source("tif_processing.R")
-source("CNN.R")
-#source("CNN_2.R")
+#source("CNN.R")
+source("CNN_2.R")
 
 #u_net <- load_model_hdf5("./u_net_etna.h5")
 #u_net <- load_model_hdf5("./u_net_saku.h5")
@@ -51,6 +51,19 @@ etna_mask_subsets = dl_subsets(inputrst = etna_mask,
                                targetdir = (paste(getwd(), "/etna_data/pixel-based/train/masks/", sep = "")),
                                targetname = "etna_mask_subset_")
 
+# 70% ETNA
+etna_full <- stack(paste(getwd(), "/etna_data/etna_b2_b3_b4_b8_b12_train_part.tif", sep = ""))
+etna_subsets = dl_subsets(inputrst = etna_full,
+                          targetsize = size,
+                          targetdir = (paste(getwd(), "/etna_data/pixel-based/train_part/imgs/", sep = "")),  # must already exist
+                          targetname = "etna_subset_")
+
+etna_mask <- stack(paste(getwd(), "/etna_data/etna_mask_train_part.tif", sep = ""))
+etna_mask_subsets = dl_subsets(inputrst = etna_mask,
+                               targetsize = size,
+                               targetdir = (paste(getwd(), "/etna_data/pixel-based/train_part/masks/", sep = "")),
+                               targetname = "etna_mask_subset_")
+
 # SAKURAJIMA
 saku_full <- stack(paste(getwd(), "/sakurajima_data/saku_b2_b3_b4_b8_b12.tif", sep = ""))
 saku_subsets = dl_subsets(inputrst = saku_full,
@@ -64,6 +77,19 @@ saku_mask_subsets = dl_subsets(inputrst = saku_mask,
                                targetdir = (paste(getwd(), "/sakurajima_data/pixel-based/train/masks/", sep = "")),
                                targetname = "saku_mask_subset_")
 
+# KILAUEA
+hawa_full <- stack(paste(getwd(), "/hawaii_data/hawaii_b2_b3_b4_b8_b12.tif", sep = ""))
+hawa_subsets = dl_subsets(inputrst = hawa_full,
+                          targetsize = size,
+                          targetdir = (paste(getwd(), "/hawaii_data/pixel-based/train/imgs/", sep = "")),
+                          targetname = "hawaii_subset_")
+
+hawa_mask <- stack(paste(getwd(), "/hawaii_data/hawaii_mask.tif", sep = ""))
+hawa_mask_subsets = dl_subsets(inputrst = hawa_mask,
+                               targetsize = size,
+                               targetdir = (paste(getwd(), "/hawaii_data/pixel-based/train/masks/", sep = "")),
+                               targetname = "hawaii_mask_subset_")
+
 
 ### data preprocessing with data augmentation:
 
@@ -72,6 +98,11 @@ saku_mask_subsets = dl_subsets(inputrst = saku_mask,
 etna_files <- data.frame(
   img = list.files(path = (paste(getwd(), "/etna_data/pixel-based/train/imgs/", sep = "")), full.names=TRUE),
   mask = list.files(path = (paste(getwd(), "/etna_data/pixel-based/train/masks/", sep = "")), full.names=TRUE)
+)
+# with 70% of etna-data:
+etna_files <- data.frame(
+  img = list.files(path = (paste(getwd(), "/etna_data/pixel-based/train_part/imgs/", sep = "")), full.names=TRUE),
+  mask = list.files(path = (paste(getwd(), "/etna_data/pixel-based/train_part/masks/", sep = "")), full.names=TRUE)
 )
 
 # randomly split the data.frame with the file-paths into a training-dataset (75%) and a validation-dataset (25%)
@@ -107,6 +138,22 @@ saku_validation_dataset = make_dataset_for_CNN(files = saku_files_validation, tr
 
 inspect_both_datasets(saku_training_dataset, saku_validation_dataset)
 
+# *************************************** KILAUEA ***************************************
+hawa_files <- data.frame(
+  img = list.files(path = (paste(getwd(), "/hawaii_data/pixel-based/train/imgs/", sep = "")), full.names=TRUE),
+  mask = list.files(path = (paste(getwd(), "/hawaii_data/pixel-based/train/masks/", sep = "")), full.names=TRUE)
+)
+
+hawa_files <- initial_split(hawa_files, prop = 0.75)
+hawa_files_training = training(hawa_files)
+hawa_files_validation = testing(hawa_files)
+
+# make training-dataset and validation-dataset of kilauea-data, both with data augmentation
+hawa_training_dataset = make_dataset_for_CNN(files = hawa_files_training, train = TRUE)
+hawa_validation_dataset = make_dataset_for_CNN(files = hawa_files_validation, train = FALSE)
+
+inspect_both_datasets(hawa_training_dataset, hawa_validation_dataset)
+
 
 ########################################### TRAIN THE CNN ###########################################
 
@@ -115,7 +162,7 @@ inspect_both_datasets(saku_training_dataset, saku_validation_dataset)
 # JUST USE THIS WITH A GPU
 compile(
   u_net,
-  optimizer = optimizer_rmsprop(lr = 1e-5),  # TODO adapt learning rate
+  optimizer = optimizer_rmsprop(lr = 1e-5),
   loss = "binary_crossentropy",
   metrics = c(metric_binary_accuracy)
 )
@@ -123,7 +170,7 @@ compile(
 # train with etna-data:
 diagnostics <- fit(u_net,
                    etna_training_dataset,
-                   epochs = 17,  # TODO adapt number of epochs
+                   epochs = 17,
                    validation_data = etna_validation_dataset)
 plot(diagnostics)
 
@@ -132,12 +179,21 @@ save_model_hdf5(u_net, filepath = "./u_net_etna.h5")
 # train with saku-data:
 diagnostics <- fit(u_net,
                    saku_training_dataset,
-                   epochs = 17,  # TODO adapt number of epochs
+                   epochs = 17,
                    validation_data = saku_validation_dataset)
 plot(diagnostics)
 
+# train with kilauea-data:
+diagnostics <- fit(u_net,
+                   hawa_training_dataset,
+                   epochs = 17,
+                   validation_data = hawa_validation_dataset)
+plot(diagnostics)
+
 save_model_hdf5(u_net, filepath = "./u_net_saku.h5")
-#save_model_hdf5(u_net, filepath = "./u_net_etna_saku.h5")
+save_model_hdf5(u_net, filepath = "./u_net_etna_saku.h5")
+save_model_hdf5(u_net, filepath = "./u_net_etna_hawa.h5")
+save_model_hdf5(u_net, filepath = "./u_net_hawa.h5")
 
 ### inspect one result
 # one result-subset of etna:
@@ -152,7 +208,13 @@ inspect_one_result_subset(files = saku_files, validation_dataset = saku_validati
 # *************************************** ETNA ***************************************
 # make subsets of the image on which to predict:
 # (just once but this variable 'etna_subsets_pred' is needed for reassembling the predictions)
-etna_full_pred <- stack(paste(getwd(), "/etna_data/etna_b2_b3_b4_b8_b12.tif", sep = ""))  # TODO anpassen
+etna_full_pred <- stack(paste(getwd(), "/etna_data/etna_b2_b3_b4_b8_b12.tif", sep = ""))
+etna_subsets_pred = dl_subsets(inputrst = etna_full_pred,
+                               targetsize = size,
+                               targetdir = (paste(getwd(), "/etna_data/pixel-based/prediction/imgs/", sep = "")),  # must already exist
+                               targetname = "")
+# with 30% of etna-data:
+etna_full_pred <- stack(paste(getwd(), "/etna_data/etna_b2_b3_b4_b8_b12_predict_part.tif", sep = ""))
 etna_subsets_pred = dl_subsets(inputrst = etna_full_pred,
                                targetsize = size,
                                targetdir = (paste(getwd(), "/etna_data/pixel-based/prediction/imgs/", sep = "")),  # must already exist
@@ -179,7 +241,7 @@ rebuild_img(pred_subsets = etna_predictions,
 
 
 # *************************************** SAKU ***************************************
-saku_full_pred <- stack(paste(getwd(), "/sakurajima_data/saku_b2_b3_b4_b8_b12.tif", sep = ""))  # TODO anpassen
+saku_full_pred <- stack(paste(getwd(), "/sakurajima_data/saku_b2_b3_b4_b8_b12.tif", sep = ""))
 saku_subsets_pred = dl_subsets(inputrst = saku_full_pred,
                                targetsize = size,
                                targetdir = (paste(getwd(), "/sakurajima_data/pixel-based/prediction/imgs/", sep = "")),  # must already exist
@@ -203,7 +265,7 @@ rebuild_img(pred_subsets = saku_predictions,
 
 
 # *************************************** SUWA ***************************************
-suwa_full_pred <- stack(paste(getwd(), "/suwanosejima_data/suwa_b2_b3_b4_b8_b12.tif", sep = ""))  # TODO anpassen
+suwa_full_pred <- stack(paste(getwd(), "/suwanosejima_data/suwa_b2_b3_b4_b8_b12.tif", sep = ""))
 suwa_subsets_pred = dl_subsets(inputrst = suwa_full_pred,
                                targetsize = size,
                                targetdir = (paste(getwd(), "/suwanosejima_data/pixel-based/prediction/imgs/", sep = "")),
@@ -224,28 +286,3 @@ system.time(suwa_predictions <- predict(u_net,
 rebuild_img(pred_subsets = suwa_predictions,
             out_path = (paste(getwd(), "/suwanosejima_data/pixel-based/prediction/", sep = "")),
             target_rst = suwa_subsets_pred)
-
-
-######################################################################################################
-
-# using the 'pretrained_net':
-# TODO number of bands must be adapted because pretrained_net takes just 3 bands
-
-compile(
-  pretrained_net,
-  optimizer = optimizer_rmsprop(lr = 1e-5),
-  loss = "binary_crossentropy",
-  metrics = c("accuracy")
-)
-
-# the whole net will be used while training but only the weights of our own added layers will be adapted
-diagnostics <- fit(pretrained_net,
-                   training_dataset,
-                   epochs = 6,
-                   validation_data = validation_dataset)
-plot(diagnostics)
-
-# --> IM PLOT PRUEFEN, OB NUN GUTE ANPASSUNGEN SCHON NACH WENIGER EPOCHEN ALS MIT ERSTEM EINFACHEN NETZ
-# (ob: training curve flattens at a high accuracy already after less epochs as before)
-
-diagnostics$metrics
