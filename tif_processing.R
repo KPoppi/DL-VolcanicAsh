@@ -37,7 +37,7 @@ dl_prepare_data_tif <- function(files, train, predict=FALSE, subsets_path=NULL, 
       img %>%
         tf$image$random_brightness(max_delta = 0.3) %>%
         tf$image$random_contrast(lower = 0.5, upper = 0.7) %>%
-        # TODO the following is not supported for >3 bands - you can uncomment in case you use only 3band images
+        # the following is not supported for >3 bands - you can uncomment in case you use only 3band images
         #tf$image$random_saturation(lower = 0.5, upper = 0.7) %>%
         # make sure we still are between 0 and 1
         tf$clip_by_value(0, 1)
